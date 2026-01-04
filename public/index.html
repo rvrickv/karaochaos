@@ -11,19 +11,49 @@
     <style>
         :root { --neon-pink: #ff00ff; --neon-green: #39ff14; --neon-blue: #00f2ff; --neon-red: #ff3131; --dark-bg: #050505; }
         body { font-family: 'Space Grotesk', sans-serif; background-color: var(--dark-bg); color: white; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; text-transform: uppercase; transition: background 0.3s; }
+        
+        /* Main Display */
         #display-box { font-family: 'Syncopate', sans-serif; background: #000; border: 8px solid var(--neon-green); border-radius: 80px; box-shadow: 0 0 40px var(--neon-green), inset 0 0 20px var(--neon-green); height: 400px; width: 1000px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto 40px auto; padding: 40px; box-sizing: border-box; color: var(--neon-green); text-align: center; }
         #song-display-text { font-size: 3.5rem; text-shadow: 0 0 20px var(--neon-green); }
         .artist-style { display: block; font-family: 'Space Grotesk'; font-size: 2rem; color: var(--neon-blue); margin-top: 25px; }
+        
+        /* Scoreboard */
         #scoreboard { position: fixed; top: 20px; right: 20px; background: rgba(0,0,0,0.9); border: 3px solid var(--neon-pink); box-shadow: 0 0 20px var(--neon-pink); padding: 20px; border-radius: 30px; width: 320px; z-index: 100; }
         #round-indicator { color: var(--neon-blue); font-family: 'Syncopate'; font-size: 1.1rem; text-align: center; margin-bottom: 10px; border-bottom: 2px solid var(--neon-blue); padding-bottom: 5px; }
-        .qr-card { background: white; padding: 10px; border-radius: 15px; display: inline-block; }
+        
+        /* Buttons & UI */
         .btn { padding: 20px 40px; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 60px; margin: 10px; font-weight: 700; font-family: 'Syncopate'; transition: 0.1s; }
         .btn-green { background: var(--neon-green); color: black; box-shadow: 0 0 20px var(--neon-green); }
         .btn-pink { background: var(--neon-pink); color: white; }
         .btn-red { background: var(--neon-red); color: white; box-shadow: 0 0 20px var(--neon-red); }
         .btn-blue { background: var(--neon-blue); color: black; }
+        
+        /* RADIAL TIMER STYLES */
         #voting-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        #v-timer { font-size: 15rem; font-family: 'Syncopate'; color: var(--neon-green); margin: 0; }
+        .timer-container { position: relative; width: 450px; height: 450px; display: flex; align-items: center; justify-content: center; }
+        .timer-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
+        .timer-bg { fill: none; stroke: #222; stroke-width: 6; }
+        #timer-bar { 
+            fill: none; stroke: var(--neon-green); stroke-width: 6; stroke-linecap: round;
+            stroke-dasharray: 283; stroke-dashoffset: 0;
+            transition: stroke-dashoffset 1s linear; 
+        }
+        #v-timer { font-size: 10rem; font-family: 'Syncopate'; color: var(--neon-green); position: relative; z-index: 10; }
+        #v-count { font-size: 3rem; color: var(--neon-blue); font-family: 'Syncopate'; margin-top: 20px; }
+
+        /* QR CODE POSITIONING */
+        .qr-card { background: white; padding: 10px; border-radius: 15px; display: inline-block; }
+        .qr-fixed-bottom { position: fixed; bottom: 80px; left: 20px; background: white; padding: 5px; border-radius: 10px; z-index: 3000; }
+
+        /* NEXT UP FOOTER */
+        #next-up-footer { 
+            margin-top: 40px; 
+            font-family: 'Syncopate'; 
+            background: rgba(0,0,0,0.5);
+            padding: 20px;
+            border: 2px solid var(--neon-blue);
+            border-radius: 20px;
+        }
         .hidden { display: none !important; }
         #current-player-display { font-family: 'Syncopate'; font-size: 3.5rem; color: var(--neon-pink); text-align: center; margin-bottom: 20px;}
         .setup-input { padding: 15px; font-size: 1.2rem; border-radius: 15px; border: 2px solid var(--neon-blue); background: #000; color: #fff; margin: 10px; text-align: center; }
@@ -36,9 +66,21 @@
 <body>
 
     <div id="voting-overlay" class="hidden">
-        <div id="v-timer">25</div>
-        <div id="v-count" style="font-size: 3rem; color: var(--neon-blue); font-family: 'Syncopate';">VOTES: 0</div>
-        <div class="qr-card" style="margin-top: 20px;"><canvas id="canvas-overlay"></canvas></div>
+        <div class="timer-container">
+            <svg class="timer-svg" viewBox="0 0 100 100">
+                <circle class="timer-bg" cx="50" cy="50" r="45"></circle>
+                <circle id="timer-bar" cx="50" cy="50" r="45"></circle>
+            </svg>
+            <div id="v-timer">25</div>
+        </div>
+        <div id="v-count">VOTES: 0</div>
+        
+        <div id="next-up-footer">
+            <span style="color: var(--neon-blue);">NEXT UP: </span>
+            <span id="next-player-name" style="color: white; font-size: 1.5rem;">---</span>
+        </div>
+    
+        <div class="qr-fixed-bottom"><canvas id="canvas-overlay"></canvas></div>
     </div>
 
     <div id="scoreboard" class="hidden">
@@ -76,21 +118,25 @@
         </div>
     </div>
 
+    <div id="next-up-footer" class="hidden">
+        <span style="color: var(--neon-blue);">NEXT UP: </span>
+        <span id="next-player-name" style="color: white; font-size: 1.5rem;">---</span>
+    </div>
+
     <audio id="snd-spin" src="spin.mp3"></audio>
     <audio id="snd-select" src="select.mp3"></audio>
 
     <script>
-        const socket = io(); // Connects to the same host that served the page
+        const socket = io();
         let masterSongs = [], players = [], activeDeck = [], currentPlayerIndex = 0, currentRound = 1, totalRounds = 3;
         let targetSong = null, isDuet = false, duetPartner = null, declinedPartners = [];
 
         socket.emit('request-init');
         socket.on('init-data', (data) => {
             masterSongs = data.songs;
-            // Generate QR code for mobile joining based on current browser address
             const shareUrl = window.location.origin + '/mobile';
             QRCode.toCanvas(document.getElementById('canvas-setup'), shareUrl, { width: 140, margin: 1 });
-            QRCode.toCanvas(document.getElementById('canvas-overlay'), shareUrl, { width: 180, margin: 1 });
+            QRCode.toCanvas(document.getElementById('canvas-overlay'), shareUrl, { width: 120, margin: 1 });
         });
 
         function startGame() {
@@ -112,14 +158,6 @@
             updateUI();
         }
 
-        function showFloatingPenalty(text) {
-            const el = document.createElement('div');
-            el.className = 'penalty-text';
-            el.innerText = text;
-            document.body.appendChild(el);
-            setTimeout(() => el.remove(), 2000);
-        }
-
         function animateSelection() {
             document.getElementById('spin-group').classList.add('hidden');
             document.getElementById('action-btns').classList.add('hidden');
@@ -135,34 +173,21 @@
 
         function finalizeSelection() {
             document.getElementById('snd-select').play().catch(()=>{});
-            
-            // Refresh deck if empty
             if (activeDeck.length === 0) activeDeck = [...masterSongs].sort(() => Math.random() - 0.5);
-            
-            // Pick the song
             targetSong = activeDeck.pop();
-            
-            // Display Title and Artist
             const parts = targetSong.title.split(' - ');
             document.getElementById('song-display-text').innerHTML = `${parts[0]}<span class="artist-style">${parts[1] || ''}</span>`;
             
-            // Strict Metadata Check: If it's a duet, trigger duet logic 100% of the time
-            if (targetSong.isDuet === true) { 
-                triggerDuet(); 
-            } else { 
-                isDuet = false;
-                document.getElementById('action-btns').classList.remove('hidden');
-            }
+            if (targetSong.isDuet === true) triggerDuet(); 
+            else { isDuet = false; document.getElementById('action-btns').classList.remove('hidden'); }
         }
 
         function triggerDuet() {
             isDuet = true;
             let pool = players.filter((p, i) => i !== currentPlayerIndex && !declinedPartners.includes(p));
             duetPartner = pool[Math.floor(Math.random() * pool.length)];
-            
             const displayEl = document.getElementById('current-player-display');
             const chickenBtn = document.querySelector('.btn-red[onclick="chickenOut()"]');
-
             if (pool.length === 1) {
                 displayEl.innerHTML = `<span style="color:var(--neon-red)">NO ESCAPE:</span> ${players[currentPlayerIndex].name} & ${duetPartner.name}`;
                 chickenBtn.classList.add('hidden');
@@ -170,19 +195,11 @@
                 displayEl.innerText = `${players[currentPlayerIndex].name} & ${duetPartner.name}`;
                 chickenBtn.classList.remove('hidden');
             }
-            
             document.getElementById('duet-btns').classList.remove('hidden');
         }
 
         function acceptDuet() { document.getElementById('duet-btns').classList.add('hidden'); document.getElementById('action-btns').classList.remove('hidden'); }
-        
-        function chickenOut() { 
-            duetPartner.score--; 
-            declinedPartners.push(duetPartner); 
-            updateUI(); 
-            document.getElementById('duet-btns').classList.add('hidden'); 
-            triggerDuet(); 
-        }
+        function chickenOut() { duetPartner.score--; declinedPartners.push(duetPartner); updateUI(); document.getElementById('duet-btns').classList.add('hidden'); triggerDuet(); }
 
         function playSong() { window.open(targetSong.url, '_blank'); document.getElementById('action-btns').classList.add('hidden'); document.getElementById('result-btns').classList.remove('hidden'); }
         
@@ -190,11 +207,9 @@
             let p = players[currentPlayerIndex];
             if (p.skipsRemaining > 1) {
                 p.score -= 1; p.skipsRemaining--;
-                showFloatingPenalty("-1 PT");
                 animateSelection();
             } else if (p.skipsRemaining === 1) {
                 p.score -= 3; p.skipsRemaining--;
-                showFloatingPenalty("-3 POINTS!");
                 setTimeout(() => nextTurn(), 800);
             }
             updateUI();
@@ -209,7 +224,14 @@
             socket.emit('start-voting'); 
         }
 
-        socket.on('timer-update', (t) => document.getElementById('v-timer').innerText = t);
+        socket.on('timer-update', (t) => {
+            document.getElementById('v-timer').innerText = t;
+            const circle = document.getElementById('timer-bar');
+            const circumference = 283; 
+            const offset = circumference - (t / 25) * circumference;
+            circle.style.strokeDashoffset = offset;
+        });
+
         socket.on('count-update', (c) => document.getElementById('v-count').innerText = `VOTES: ${c}`);
         socket.on('voting-end', (bonus) => {
             players[currentPlayerIndex].score += bonus;
@@ -244,20 +266,20 @@
             document.getElementById('song-display-text').innerHTML = winners.join(' & ');
             document.getElementById('spin-group').classList.add('hidden');
             document.getElementById('game-over-btns').classList.remove('hidden');
+            document.getElementById('next-up-footer').classList.add('hidden');
             document.body.classList.add('flash-win');
-            const duration = 15 * 1000;
-            const animationEnd = Date.now() + duration;
-            const interval = setInterval(function() {
-                const timeLeft = animationEnd - Date.now();
-                if (timeLeft <= 0) return clearInterval(interval);
-                confetti({ particleCount: 50, spread: 70, origin: { y: 0.6 }, colors: ['#ff00ff', '#39ff14', '#00f2ff'] });
-            }, 250);
+            confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
         }
 
         function updatePlayerTurnUI() {
             const p = players[currentPlayerIndex];
-            const skipBtn = document.getElementById('skip-btn-el');
+            const nextP = players[(currentPlayerIndex + 1) % players.length];
+            
             document.getElementById('current-player-display').innerText = `UP NEXT: ${p.name}`;
+            document.getElementById('next-up-footer').classList.remove('hidden');
+            document.getElementById('next-player-name').innerText = nextP.name;
+
+            const skipBtn = document.getElementById('skip-btn-el');
             if (p.skipsRemaining > 1) {
                 skipBtn.innerText = "SKIP (-1 POINT)";
                 skipBtn.className = "btn btn-pink";
