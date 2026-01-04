@@ -5,84 +5,51 @@
     <title>KARAOCHAOS AUDIENCE</title>
     <script src="/socket.io/socket.io.js"></script>
     <style>
-        body { background: #050505; color: white; font-family: sans-serif; text-align: center; text-transform: uppercase; margin: 0; padding: 20px; overflow-x: hidden; }
-        
-        h2 { color: #00f2ff; letter-spacing: 2px; }
-
-        /* CIRCULAR TIMER STYLES */
-        .mobile-timer-container {
-            position: relative;
-            width: 220px;
-            height: 220px;
-            margin: 30px auto;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-        .timer-svg {
-            position: absolute;
-            top: 0; left: 0; width: 100%; height: 100%;
-            transform: rotate(-90deg);
-        }
+        body { background: #050505; color: white; font-family: sans-serif; text-align: center; text-transform: uppercase; margin: 0; padding: 20px; }
+        h2 { color: #00f2ff; margin-top: 30px; }
+        .timer-container { position: relative; width: 220px; height: 220px; margin: 30px auto; display: flex; align-items: center; justify-content: center; }
+        .timer-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
         .timer-bg { fill: none; stroke: #222; stroke-width: 8; }
-        #mobile-timer-bar {
-            fill: none; 
-            stroke: #ff00ff; /* Neon Pink for Mobile */
-            stroke-width: 8; 
-            stroke-linecap: round;
-            stroke-dasharray: 283; 
-            stroke-dashoffset: 0;
-            transition: stroke-dashoffset 1s linear;
-        }
+        #mobile-timer-bar { fill: none; stroke: #ff00ff; stroke-width: 8; stroke-linecap: round; stroke-dasharray: 283; stroke-dashoffset: 0; transition: stroke-dashoffset 1s linear; }
         #mobile-timer { font-size: 5rem; font-weight: bold; color: #ff00ff; position: relative; z-index: 10; }
-
-        /* BUTTONS */
-        .btn-vote { 
-            background: #39ff14; 
-            color: black; 
-            border: none; 
-            padding: 30px; 
-            font-size: 1.8rem; 
-            border-radius: 20px; 
-            font-weight: bold; 
-            width: 100%; 
-            margin-top: 10px; 
-            box-shadow: 0 0 20px #39ff14; 
-            cursor: pointer;
-        }
-        
+        .btn-vote { background: #39ff14; color: black; border: none; padding: 30px; font-size: 1.8rem; border-radius: 20px; font-weight: bold; width: 100%; box-shadow: 0 0 20px #39ff14; }
         .hidden { display: none !important; }
         #confirm { color: #39ff14; font-weight: bold; font-size: 1.5rem; margin-top: 20px; }
-        
-        #waiting-screen p { color: #aaa; margin-top: 50px; font-style: italic; }
     </style>
 </head>
 <body>
-    <div id="waiting-screen">
-        <h2 style="margin-top: 40px;">KARAOCHAOS</h2>
-        <p>Waiting for the performer to finish...</p>
-    </div>
-
+    <div id="waiting-screen"><h2>KARAOCHAOS</h2><p style="color:#666; margin-top:50px;">Waiting for performer...</p></div>
     <div id="voting-screen" class="hidden">
         <h2>VOTE NOW!</h2>
-        
-        <div class="mobile-timer-container">
-            <svg class="timer-svg" viewBox="0 0 100 100">
-                <circle class="timer-bg" cx="50" cy="50" r="45"></circle>
-                <circle id="mobile-timer-bar" cx="50" cy="50" r="45"></circle>
-            </svg>
+        <div class="timer-container">
+            <svg class="timer-svg" viewBox="0 0 100 100"><circle class="timer-bg" cx="50" cy="50" r="45"></circle><circle id="mobile-timer-bar" cx="50" cy="50" r="45"></circle></svg>
             <div id="mobile-timer">25</div>
         </div>
-
         <button id="vote-btn" class="btn-vote" onclick="sendVote()">THEY ARE KILLING IT!</button>
         <p id="confirm" class="hidden">VOTE CAST!</p>
     </div>
-
     <script>
         const socket = io(); 
+        let myID = null;
+
+        // Generate ID immediately on load
+        function initFingerprint() {
+            myID = localStorage.getItem('voterFingerprint');
+            if (!myID) {
+                myID = 'voter-' + Math.random().toString(36).substr(2, 9);
+                localStorage.setItem('voterFingerprint', myID);
+            }
+            console.log("Your Fingerprint:", myID);
+        }
+        initFingerprint(); // Run this right away
 
         function sendVote() { 
-            socket.emit('cast-vote'); 
+            if (localStorage.getItem('hasVoted') === 'true') return;
+            
+            // Explicitly send the 'myID' variable we generated at startup
+            socket.emit('cast-vote', myID); 
+            
+            localStorage.setItem('hasVoted', 'true');
             document.getElementById('vote-btn').classList.add('hidden'); 
             document.getElementById('confirm').classList.remove('hidden'); 
         }
@@ -90,31 +57,24 @@
         function enterVotingMode() { 
             document.getElementById('waiting-screen').classList.add('hidden'); 
             document.getElementById('voting-screen').classList.remove('hidden'); 
-            document.getElementById('vote-btn').classList.remove('hidden'); 
-            document.getElementById('confirm').classList.add('hidden'); 
+            if (localStorage.getItem('hasVoted') === 'true') {
+                document.getElementById('vote-btn').classList.add('hidden'); 
+                document.getElementById('confirm').classList.remove('hidden'); 
+            } else {
+                document.getElementById('vote-btn').classList.remove('hidden'); 
+                document.getElementById('confirm').classList.add('hidden'); 
+            }
         }
 
-        socket.on('start-voting', () => {
-            enterVotingMode();
-        });
-
+        socket.on('start-voting', () => { localStorage.removeItem('hasVoted'); enterVotingMode(); });
         socket.on('timer-update', (t) => { 
-            // If the user joined late, force them into voting mode
-            if(document.getElementById('voting-screen').classList.contains('hidden')) {
-                enterVotingMode();
-            }
-
-            // Update the digital number
+            if(document.getElementById('voting-screen').classList.contains('hidden')) enterVotingMode();
             document.getElementById('mobile-timer').innerText = t; 
-
-            // Update the SVG Ring
-            const circle = document.getElementById('mobile-timer-bar');
-            const circumference = 283; // 2 * PI * 45
-            const offset = circumference - (t / 25) * circumference;
-            circle.style.strokeDashoffset = offset;
+            const offset = 283 - (t / 25) * 283;
+            document.getElementById('mobile-timer-bar').style.strokeDashoffset = offset;
         });
-
         socket.on('voting-end', () => { 
+            localStorage.removeItem('hasVoted');
             document.getElementById('waiting-screen').classList.remove('hidden'); 
             document.getElementById('voting-screen').classList.add('hidden'); 
         });
