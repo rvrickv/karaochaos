@@ -135,13 +135,24 @@
 
         function finalizeSelection() {
             document.getElementById('snd-select').play().catch(()=>{});
+            
+            // Refresh deck if empty
             if (activeDeck.length === 0) activeDeck = [...masterSongs].sort(() => Math.random() - 0.5);
+            
+            // Pick the song
             targetSong = activeDeck.pop();
+            
+            // Display Title and Artist
             const parts = targetSong.title.split(' - ');
             document.getElementById('song-display-text').innerHTML = `${parts[0]}<span class="artist-style">${parts[1] || ''}</span>`;
             
-            if (targetSong.isDuet === true) triggerDuet(); 
-            else document.getElementById('action-btns').classList.remove('hidden');
+            // Strict Metadata Check: If it's a duet, trigger duet logic 100% of the time
+            if (targetSong.isDuet === true) { 
+                triggerDuet(); 
+            } else { 
+                isDuet = false;
+                document.getElementById('action-btns').classList.remove('hidden');
+            }
         }
 
         function triggerDuet() {
