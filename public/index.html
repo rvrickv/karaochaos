@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KARAOCHAOS</title>
+    <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Space+Grotesk:wght@300;700&display=swap" rel="stylesheet">
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.4.4/build/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+    <style>
+        :root { --neon-pink: #ff00ff; --neon-green: #39ff14; --neon-blue: #00f2ff; --neon-red: #ff3131; --dark-bg: #050505; }
+        body { font-family: 'Space Grotesk', sans-serif; background-color: var(--dark-bg); color: white; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; text-transform: uppercase; transition: background 0.3s; }
+        #display-box { font-family: 'Syncopate', sans-serif; background: #000; border: 8px solid var(--neon-green); border-radius: 80px; box-shadow: 0 0 40px var(--neon-green), inset 0 0 20px var(--neon-green); height: 400px; width: 1000px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto 40px auto; padding: 40px; box-sizing: border-box; color: var(--neon-green); text-align: center; }
+        #song-display-text { font-size: 3.5rem; text-shadow: 0 0 20px var(--neon-green); }
+        .artist-style { display: block; font-family: 'Space Grotesk'; font-size: 2rem; color: var(--neon-blue); margin-top: 25px; }
+        #scoreboard { position: fixed; top: 20px; right: 20px; background: rgba(0,0,0,0.9); border: 3px solid var(--neon-pink); box-shadow: 0 0 20px var(--neon-pink); padding: 20px; border-radius: 30px; width: 320px; z-index: 100; }
+        #round-indicator { color: var(--neon-blue); font-family: 'Syncopate'; font-size: 1.1rem; text-align: center; margin-bottom: 10px; border-bottom: 2px solid var(--neon-blue); padding-bottom: 5px; }
+        .qr-card { background: white; padding: 10px; border-radius: 15px; display: inline-block; }
+        .btn { padding: 20px 40px; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 60px; margin: 10px; font-weight: 700; font-family: 'Syncopate'; transition: 0.1s; }
+        .btn-green { background: var(--neon-green); color: black; box-shadow: 0 0 20px var(--neon-green); }
+        .btn-pink { background: var(--neon-pink); color: white; }
+        .btn-red { background: var(--neon-red); color: white; box-shadow: 0 0 20px var(--neon-red); }
+        .btn-blue { background: var(--neon-blue); color: black; }
+        #voting-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        #v-timer { font-size: 15rem; font-family: 'Syncopate'; color: var(--neon-green); margin: 0; }
+        .hidden { display: none !important; }
+        #current-player-display { font-family: 'Syncopate'; font-size: 3.5rem; color: var(--neon-pink); text-align: center; margin-bottom: 20px;}
+        .setup-input { padding: 15px; font-size: 1.2rem; border-radius: 15px; border: 2px solid var(--neon-blue); background: #000; color: #fff; margin: 10px; text-align: center; }
+        .penalty-text { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); font-family: 'Syncopate', sans-serif; font-size: 8rem; color: var(--neon-red); text-shadow: 0 0 30px var(--neon-red); z-index: 3000; pointer-events: none; animation: floatUp 2s forwards; }
+        @keyframes floatUp { 0% { transform: translate(-50%, -50%); opacity: 1; } 100% { transform: translate(-50%, -150%); opacity: 0; } }
+        .flash-win { animation: bgFlash 0.5s infinite alternate; }
+        @keyframes bgFlash { from { background: #050505; } to { background: #220022; } }
+    </style>
+</head>
+<body>
+
+    <div id="voting-overlay" class="hidden">
+        <div id="v-timer">25</div>
+        <div id="v-count" style="font-size: 3rem; color: var(--neon-blue); font-family: 'Syncopate';">VOTES: 0</div>
+        <div class="qr-card" style="margin-top: 20px;"><canvas id="canvas-overlay"></canvas></div>
+    </div>
+
+    <div id="scoreboard" class="hidden">
+        <div id="round-indicator">ROUND 1 / 3</div>
+        <div id="score-list"></div>
+    </div>
+
+    <div id="setup-screen" style="text-align: center;">
+        <h1 style="color: var(--neon-pink); font-family: 'Syncopate'; font-size: 4rem;">KARAOCHAOS</h1>
+        <div style="margin-bottom: 20px;"><div class="qr-card"><canvas id="canvas-setup"></canvas></div></div>
+        <input type="text" id="player-names" class="setup-input" placeholder="NAMES (ALICE, BOB...)" style="width: 400px;"><br>
+        <label style="font-family: 'Syncopate'; color: var(--neon-blue);">ROUNDS: </label>
+        <input type="number" id="num-rounds" class="setup-input" value="3" style="width: 80px;"><br>
+        <button class="btn btn-green" onclick="startGame()">START SESSION</button>
+    </div>
+
+    <div id="game-screen" class="hidden">
+        <div id="current-player-display">READY?</div>
+        <div id="display-box"><div id="song-display-text">PUSH SELECT</div></div>
+        <div style="text-align: center;">
+            <div id="spin-group"><button class="btn btn-green" onclick="animateSelection()">SELECT SONG</button></div>
+            <div id="duet-btns" class="hidden">
+                <button class="btn btn-blue" onclick="acceptDuet()">ACCEPT DUET</button>
+                <button class="btn btn-red" onclick="chickenOut()">CHICKEN OUT</button>
+            </div>
+            <div id="action-btns" class="hidden">
+                <button class="btn btn-green" onclick="playSong()">I'VE GOT THIS!</button>
+                <button id="skip-btn-el" class="btn btn-pink" onclick="skipSong()">SKIP (-1 POINT)</button>
+            </div>
+            <div id="result-btns" class="hidden">
+                <button class="btn btn-red" onclick="startVoting(5)">QUITTER (5 PTS)</button>
+                <button class="btn btn-green" onclick="startVoting(10)">NAILED IT! (10 PTS)</button>
+            </div>
+            <div id="game-over-btns" class="hidden"><button class="btn btn-blue" onclick="location.reload()">NEW GAME</button></div>
+        </div>
+    </div>
+
+    <audio id="snd-spin" src="spin.mp3"></audio>
+    <audio id="snd-select" src="select.mp3"></audio>
+
+    <script>
+        const socket = io(); // Connects to the same host that served the page
+        let masterSongs = [], players = [], activeDeck = [], currentPlayerIndex = 0, currentRound = 1, totalRounds = 3;
+        let targetSong = null, isDuet = false, duetPartner = null, declinedPartners = [];
+
+        socket.emit('request-init');
+        socket.on('init-data', (data) => {
+            masterSongs = data.songs;
+            // Generate QR code for mobile joining based on current browser address
+            const shareUrl = window.location.origin + '/mobile';
+            QRCode.toCanvas(document.getElementById('canvas-setup'), shareUrl, { width: 140, margin: 1 });
+            QRCode.toCanvas(document.getElementById('canvas-overlay'), shareUrl, { width: 180, margin: 1 });
+        });
+
+        function startGame() {
+            const names = document.getElementById('player-names').value;
+            totalRounds = parseInt(document.getElementById('num-rounds').value) || 3;
+            if(!names) return;
+
+            players = names.split(',').map(n => ({ name: n.trim(), score: 0, skipsRemaining: 3 }));
+            for (let i = players.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [players[i], players[j]] = [players[j], players[i]];
+            }
+
+            activeDeck = [...masterSongs].sort(() => Math.random() - 0.5);
+            document.getElementById('setup-screen').classList.add('hidden');
+            document.getElementById('game-screen').classList.remove('hidden');
+            document.getElementById('scoreboard').classList.remove('hidden');
+            updatePlayerTurnUI();
+            updateUI();
+        }
+
+        function showFloatingPenalty(text) {
+            const el = document.createElement('div');
+            el.className = 'penalty-text';
+            el.innerText = text;
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 2000);
+        }
+
+        function animateSelection() {
+            document.getElementById('spin-group').classList.add('hidden');
+            document.getElementById('action-btns').classList.add('hidden');
+            let spins = 0, maxSpins = 20, spinSnd = document.getElementById('snd-spin');
+            const interval = setInterval(() => {
+                const temp = masterSongs[Math.floor(Math.random() * masterSongs.length)];
+                const parts = temp.title.split(' - ');
+                document.getElementById('song-display-text').innerHTML = `${parts[0]}<span class="artist-style">${parts[1] || ''}</span>`;
+                spinSnd.currentTime = 0; spinSnd.play().catch(()=>{});
+                if (++spins >= maxSpins) { clearInterval(interval); finalizeSelection(); }
+            }, 100);
+        }
+
+        function finalizeSelection() {
+            document.getElementById('snd-select').play().catch(()=>{});
+            if (activeDeck.length === 0) activeDeck = [...masterSongs].sort(() => Math.random() - 0.5);
+            targetSong = activeDeck.pop();
+            const parts = targetSong.title.split(' - ');
+            document.getElementById('song-display-text').innerHTML = `${parts[0]}<span class="artist-style">${parts[1] || ''}</span>`;
+            
+            if (targetSong.isDuet === true) triggerDuet(); 
+            else document.getElementById('action-btns').classList.remove('hidden');
+        }
+
+        function triggerDuet() {
+            isDuet = true;
+            let pool = players.filter((p, i) => i !== currentPlayerIndex && !declinedPartners.includes(p));
+            duetPartner = pool[Math.floor(Math.random() * pool.length)];
+            
+            const displayEl = document.getElementById('current-player-display');
+            const chickenBtn = document.querySelector('.btn-red[onclick="chickenOut()"]');
+
+            if (pool.length === 1) {
+                displayEl.innerHTML = `<span style="color:var(--neon-red)">NO ESCAPE:</span> ${players[currentPlayerIndex].name} & ${duetPartner.name}`;
+                chickenBtn.classList.add('hidden');
+            } else {
+                displayEl.innerText = `${players[currentPlayerIndex].name} & ${duetPartner.name}`;
+                chickenBtn.classList.remove('hidden');
+            }
+            
+            document.getElementById('duet-btns').classList.remove('hidden');
+        }
+
+        function acceptDuet() { document.getElementById('duet-btns').classList.add('hidden'); document.getElementById('action-btns').classList.remove('hidden'); }
+        
+        function chickenOut() { 
+            duetPartner.score--; 
+            declinedPartners.push(duetPartner); 
+            updateUI(); 
+            document.getElementById('duet-btns').classList.add('hidden'); 
+            triggerDuet(); 
+        }
+
+        function playSong() { window.open(targetSong.url, '_blank'); document.getElementById('action-btns').classList.add('hidden'); document.getElementById('result-btns').classList.remove('hidden'); }
+        
+        function skipSong() {
+            let p = players[currentPlayerIndex];
+            if (p.skipsRemaining > 1) {
+                p.score -= 1; p.skipsRemaining--;
+                showFloatingPenalty("-1 PT");
+                animateSelection();
+            } else if (p.skipsRemaining === 1) {
+                p.score -= 3; p.skipsRemaining--;
+                showFloatingPenalty("-3 POINTS!");
+                setTimeout(() => nextTurn(), 800);
+            }
+            updateUI();
+            updatePlayerTurnUI();
+        }
+
+        function startVoting(basePts) { 
+            players[currentPlayerIndex].score += basePts; 
+            if (isDuet) duetPartner.score += 1; 
+            document.getElementById('result-btns').classList.add('hidden'); 
+            document.getElementById('voting-overlay').classList.remove('hidden'); 
+            socket.emit('start-voting'); 
+        }
+
+        socket.on('timer-update', (t) => document.getElementById('v-timer').innerText = t);
+        socket.on('count-update', (c) => document.getElementById('v-count').innerText = `VOTES: ${c}`);
+        socket.on('voting-end', (bonus) => {
+            players[currentPlayerIndex].score += bonus;
+            document.getElementById('voting-overlay').classList.add('hidden');
+            nextTurn();
+        });
+
+        function nextTurn() {
+            document.getElementById('result-btns').classList.add('hidden');
+            document.getElementById('action-btns').classList.add('hidden');
+            document.getElementById('duet-btns').classList.add('hidden');
+            currentPlayerIndex++;
+            if (currentPlayerIndex >= players.length) { 
+                currentPlayerIndex = 0; currentRound++; 
+                if (currentRound <= totalRounds) players.forEach(p => p.skipsRemaining = 3);
+            }
+            if (currentRound > totalRounds) {
+                handleGameOver();
+            } else {
+                isDuet = false; declinedPartners = [];
+                document.getElementById('spin-group').classList.remove('hidden');
+                document.getElementById('song-display-text').innerText = "PUSH SELECT";
+                updatePlayerTurnUI();
+            }
+            updateUI();
+        }
+
+        function handleGameOver() {
+            const maxScore = Math.max(...players.map(p => p.score));
+            const winners = players.filter(p => p.score === maxScore).map(p => p.name);
+            document.getElementById('current-player-display').innerText = "CHAMPIONS";
+            document.getElementById('song-display-text').innerHTML = winners.join(' & ');
+            document.getElementById('spin-group').classList.add('hidden');
+            document.getElementById('game-over-btns').classList.remove('hidden');
+            document.body.classList.add('flash-win');
+            const duration = 15 * 1000;
+            const animationEnd = Date.now() + duration;
+            const interval = setInterval(function() {
+                const timeLeft = animationEnd - Date.now();
+                if (timeLeft <= 0) return clearInterval(interval);
+                confetti({ particleCount: 50, spread: 70, origin: { y: 0.6 }, colors: ['#ff00ff', '#39ff14', '#00f2ff'] });
+            }, 250);
+        }
+
+        function updatePlayerTurnUI() {
+            const p = players[currentPlayerIndex];
+            const skipBtn = document.getElementById('skip-btn-el');
+            document.getElementById('current-player-display').innerText = `UP NEXT: ${p.name}`;
+            if (p.skipsRemaining > 1) {
+                skipBtn.innerText = "SKIP (-1 POINT)";
+                skipBtn.className = "btn btn-pink";
+                skipBtn.style.opacity = "1"; skipBtn.style.pointerEvents = "auto";
+            } else if (p.skipsRemaining === 1) {
+                skipBtn.innerText = "LOSE ROUND (-3 POINTS)";
+                skipBtn.className = "btn btn-red";
+                skipBtn.style.opacity = "1"; skipBtn.style.pointerEvents = "auto";
+            } else {
+                skipBtn.innerText = "OUT OF SKIPS";
+                skipBtn.style.opacity = "0.3"; skipBtn.style.pointerEvents = "none";
+            }
+        }
+
+        function updateUI() {
+            document.getElementById('round-indicator').innerText = `ROUND ${currentRound > totalRounds ? totalRounds : currentRound} / ${totalRounds}`;
+            document.getElementById('score-list').innerHTML = players.map(p => `
+                <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #333; font-family:'Syncopate'; font-size:0.8rem;">
+                    <span>${p.name}</span>
+                    <span>${p.score} PTS</span>
+                </div>`).join('');
+        }
+    </script>
+</body>
+</html>

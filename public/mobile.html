@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KARAOCHAOS AUDIENCE</title>
+    <script src="/socket.io/socket.io.js"></script>
+    <style>
+        body { background: #050505; color: white; font-family: sans-serif; text-align: center; text-transform: uppercase; margin: 0; padding: 20px; }
+        .btn-vote { background: #39ff14; color: black; border: none; padding: 40px; font-size: 2rem; border-radius: 20px; font-weight: bold; width: 100%; margin-top: 20px; box-shadow: 0 0 20px #39ff14; }
+        .hidden { display: none; }
+        #mobile-timer { font-size: 5rem; color: #ff00ff; }
+    </style>
+</head>
+<body>
+    <div id="waiting-screen">
+        <h2>KARAOCHAOS</h2>
+        <p>Waiting for the chaos to begin...</p>
+    </div>
+    <div id="voting-screen" class="hidden">
+        <h2>VOTE NOW!</h2>
+        <div id="mobile-timer">25</div>
+        <button id="vote-btn" class="btn-vote" onclick="sendVote()">THEY ARE KILLING IT!</button>
+        <p id="confirm" class="hidden" style="color: #39ff14; font-weight: bold; font-size: 1.5rem;">VOTE CAST!</p>
+    </div>
+    <script>
+        const socket = io(); // Connects back to the Pi automatically
+        function sendVote() { 
+            socket.emit('cast-vote'); 
+            document.getElementById('vote-btn').classList.add('hidden'); 
+            document.getElementById('confirm').classList.remove('hidden'); 
+        }
+        function enterVotingMode() { 
+            document.getElementById('waiting-screen').classList.add('hidden'); 
+            document.getElementById('voting-screen').classList.remove('hidden'); 
+            document.getElementById('vote-btn').classList.remove('hidden'); 
+            document.getElementById('confirm').classList.add('hidden'); 
+        }
+        socket.on('start-voting', () => enterVotingMode());
+        socket.on('timer-update', (t) => { 
+            if(document.getElementById('voting-screen').classList.contains('hidden')) enterVotingMode(); 
+            document.getElementById('mobile-timer').innerText = t; 
+        });
+        socket.on('voting-end', () => { 
+            document.getElementById('waiting-screen').classList.remove('hidden'); 
+            document.getElementById('voting-screen').classList.add('hidden'); 
+        });
+    </script>
+</body>
+</html>
