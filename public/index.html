@@ -11,67 +11,87 @@
     <style>
         :root { --neon-pink: #ff00ff; --neon-green: #39ff14; --neon-blue: #00f2ff; --neon-red: #ff3131; --dark-bg: #050505; }
         body { font-family: 'Space Grotesk', sans-serif; background-color: var(--dark-bg); color: white; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; text-transform: uppercase; }
-        #display-box { font-family: 'Syncopate', sans-serif; background: #000; border: 8px solid var(--neon-green); border-radius: 80px; box-shadow: 0 0 40px var(--neon-green), inset 0 0 20px var(--neon-green); height: 400px; width: 1000px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin: 0 auto 40px auto; padding: 40px; box-sizing: border-box; color: var(--neon-green); text-align: center; }
-        #song-display-text { font-size: 3.5rem; text-shadow: 0 0 20px var(--neon-green); }
-        .artist-style { display: block; font-family: 'Space Grotesk'; font-size: 2rem; color: var(--neon-blue); margin-top: 25px; }
-        #scoreboard { position: fixed; top: 20px; right: 20px; background: rgba(0,0,0,0.9); border: 3px solid var(--neon-pink); padding: 20px; border-radius: 30px; width: 320px; z-index: 100; }
-        #round-indicator { color: var(--neon-blue); font-family: 'Syncopate'; font-size: 1.1rem; text-align: center; margin-bottom: 10px; border-bottom: 2px solid var(--neon-blue); padding-bottom: 5px; }
+        
+        /* ADMIN UI */
+        #admin-gear { position: fixed; top: 20px; left: 20px; font-size: 2rem; cursor: pointer; z-index: 1000; opacity: 0.5; }
+        #admin-gear:hover { opacity: 1; transform: rotate(90deg); }
+        #admin-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 5000; display: none; flex-direction: column; align-items: center; padding: 50px; overflow-y: auto; box-sizing: border-box; }
+        .song-admin-row { width: 90%; display: flex; justify-content: space-between; align-items: center; padding: 15px; border-bottom: 1px solid #222; }
+        .del-btn { color: var(--neon-red); cursor: pointer; font-size: 1.5rem; font-weight: bold; padding: 0 20px; }
+        .badge { font-size: 0.7rem; padding: 3px 8px; border-radius: 5px; margin-left: 10px; border: 1px solid; vertical-align: middle; }
+        .badge-duet { border-color: var(--neon-pink); color: var(--neon-pink); }
+        .badge-unskip { border-color: var(--neon-red); color: var(--neon-red); }
+        .floating-add { position: fixed; bottom: 40px; right: 40px; width: 70px; height: 70px; background: var(--neon-green); border-radius: 50%; color: black; font-size: 3rem; display: flex; align-items: center; justify-content: center; cursor: pointer; border: none; font-weight: bold; box-shadow: 0 0 20px var(--neon-green); }
+
+        /* GAME UI */
+        #display-box { font-family: 'Syncopate', sans-serif; background: #000; border: 8px solid var(--neon-green); border-radius: 80px; box-shadow: 0 0 40px var(--neon-green), inset 0 0 20px var(--neon-green); height: 400px; width: 1000px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 40px; padding: 40px; box-sizing: border-box; color: var(--neon-green); text-align: center; }
+        #song-display-text { font-size: 3rem; }
+        .artist-style { display: block; font-family: 'Space Grotesk'; font-size: 1.8rem; color: var(--neon-blue); margin-top: 15px; }
+        #scoreboard { position: fixed; top: 20px; right: 20px; background: rgba(0,0,0,0.9); border: 3px solid var(--neon-pink); padding: 20px; border-radius: 30px; width: 320px; }
         .btn { padding: 20px 40px; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 60px; margin: 10px; font-weight: 700; font-family: 'Syncopate'; }
         .btn-green { background: var(--neon-green); color: black; box-shadow: 0 0 20px var(--neon-green); }
         .btn-pink { background: var(--neon-pink); color: white; }
         .btn-red { background: var(--neon-red); color: white; }
         #voting-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .timer-container { position: relative; width: 450px; height: 450px; display: flex; align-items: center; justify-content: center; }
+        .timer-container { position: relative; width: 400px; height: 400px; display: flex; align-items: center; justify-content: center; }
         .timer-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
-        .timer-bg { fill: none; stroke: #222; stroke-width: 6; }
         #timer-bar { fill: none; stroke: var(--neon-green); stroke-width: 6; stroke-linecap: round; stroke-dasharray: 283; stroke-dashoffset: 0; transition: stroke-dashoffset 1s linear; }
-        #v-timer { font-size: 10rem; font-family: 'Syncopate'; color: var(--neon-green); position: relative; z-index: 10; }
-        #v-count { font-size: 3rem; color: var(--neon-blue); font-family: 'Syncopate'; margin-top: 20px; }
-        .qr-fixed-bottom { position: fixed; bottom: 40px; left: 40px; background: white; padding: 10px; border-radius: 15px; z-index: 3000; }
-        #next-up-footer { margin-top: 50px; font-family: 'Syncopate'; padding: 20px; border: 3px solid var(--neon-blue); border-radius: 20px; background: rgba(0,0,0,0.6); }
+        #v-timer { font-size: 10rem; color: var(--neon-green); font-family: 'Syncopate'; position: relative; }
         .hidden { display: none !important; }
-        #current-player-display { font-family: 'Syncopate'; font-size: 3.5rem; color: var(--neon-pink); text-align: center; margin-bottom: 20px; }
-        .setup-input { padding: 15px; font-size: 1.2rem; border-radius: 15px; border: 2px solid var(--neon-blue); background: #000; color: #fff; margin: 10px; text-align: center; }
     </style>
 </head>
 <body>
+
+    <div id="admin-gear" onclick="toggleAdmin()">⚙️</div>
+
+    <div id="admin-modal">
+        <div style="width: 100%; display: flex; justify-content: space-between; align-items: center;">
+            <h1 style="font-family:'Syncopate'; color: var(--neon-blue);">SONG MANAGEMENT</h1>
+            <button class="btn btn-red" onclick="toggleAdmin()">CLOSE</button>
+        </div>
+        <div id="admin-song-list" style="width: 100%; margin-top: 30px;"></div>
+        <button class="floating-add" onclick="showAddDialog()">+</button>
+    </div>
+
     <div id="voting-overlay" class="hidden">
         <div class="timer-container">
             <svg class="timer-svg" viewBox="0 0 100 100">
-                <circle class="timer-bg" cx="50" cy="50" r="45"></circle>
+                <circle cx="50" cy="50" r="45" fill="none" stroke="#222" stroke-width="6"></circle>
                 <circle id="timer-bar" cx="50" cy="50" r="45"></circle>
             </svg>
             <div id="v-timer">25</div>
         </div>
-        <div id="v-count">VOTES: 0</div>
-        <div id="next-up-footer">
-            <span style="color: var(--neon-blue);">NEXT UP: </span>
-            <span id="next-player-name" style="color: white; font-size: 2rem;">---</span>
+        <div id="v-count" style="font-size: 2rem; color: var(--neon-blue); margin-top: 20px;">VOTES: 0</div>
+        <div id="next-up-footer" style="margin-top: 40px; border: 2px solid var(--neon-blue); padding: 20px; border-radius: 20px;">
+            <span style="color: var(--neon-blue);">NEXT UP: </span><span id="next-player-name">---</span>
         </div>
-        <div class="qr-fixed-bottom"><canvas id="canvas-overlay"></canvas></div>
     </div>
-    <div id="scoreboard" class="hidden"><div id="round-indicator">ROUND 1 / 3</div><div id="score-list"></div></div>
+
     <div id="setup-screen" style="text-align: center;">
-        <h1 style="color: var(--neon-pink); font-family: 'Syncopate'; font-size: 4rem;">KARAOCHAOS</h1>
-        <div style="margin-bottom: 20px;"><canvas id="canvas-setup" style="background:white; padding:10px; border-radius:15px;"></canvas></div>
-        <input type="text" id="player-names" class="setup-input" placeholder="NAMES (ALICE, BOB...)" style="width: 450px;"><br>
+        <h1 style="color: var(--neon-pink); font-family: 'Syncopate'; font-size: 3rem;">KARAOCHAOS</h1>
+        <canvas id="canvas-setup" style="background:white; padding:10px; border-radius:15px; margin-bottom: 20px;"></canvas><br>
+        <input type="text" id="player-names" placeholder="NAMES (ALICE, BOB...)" style="padding: 15px; width: 400px; border-radius: 10px; border: 2px solid var(--neon-blue); background: #000; color: #fff; text-align: center;"><br>
         <button class="btn btn-green" onclick="startGame()">START SESSION</button>
     </div>
+
     <div id="game-screen" class="hidden">
-        <div id="current-player-display">READY?</div>
+        <div id="current-player-display" style="font-family: 'Syncopate'; font-size: 2.5rem; color: var(--neon-pink); margin-bottom: 20px; text-align: center;">UP NEXT: ---</div>
         <div id="display-box"><div id="song-display-text">PUSH SELECT</div></div>
         <div style="text-align: center;">
             <div id="spin-group"><button class="btn btn-green" onclick="animateSelection()">SELECT SONG</button></div>
             <div id="action-btns" class="hidden">
-                <button class="btn btn-green" onclick="playSong()">I'VE GOT THIS!</button>
-                <button id="skip-btn-el" class="btn btn-pink" onclick="skipSong()">SKIP (-1 PT)</button>
+                <button class="btn btn-green" onclick="playSong()">PLAY</button>
+                <button id="skip-btn-el" class="btn btn-pink" onclick="skipSong()">SKIP (-1)</button>
             </div>
             <div id="result-btns" class="hidden">
-                <button class="btn btn-red" onclick="startVoting(5)">QUITTER (5 PTS)</button>
-                <button class="btn btn-green" onclick="startVoting(10)">NAILED IT! (10 PTS)</button>
+                <button class="btn btn-red" onclick="startVoting(5)">QUITTER</button>
+                <button class="btn btn-green" onclick="startVoting(10)">NAILED IT!</button>
             </div>
         </div>
     </div>
+
+    <div id="scoreboard" class="hidden"><div id="round-indicator" style="text-align: center; border-bottom: 1px solid var(--neon-blue); margin-bottom: 10px;">ROUND 1</div><div id="score-list"></div></div>
+
     <script>
         const socket = io();
         let masterSongs = [], players = [], activeDeck = [], currentPlayerIndex = 0, currentRound = 1, targetSong = null;
@@ -79,87 +99,96 @@
         socket.emit('request-init');
         socket.on('init-data', (data) => {
             masterSongs = data.songs;
-            const shareUrl = window.location.origin + '/mobile';
-            QRCode.toCanvas(document.getElementById('canvas-setup'), shareUrl, { width: 160 });
-            QRCode.toCanvas(document.getElementById('canvas-overlay'), shareUrl, { width: 120 });
+            const url = window.location.origin + '/mobile';
+            QRCode.toCanvas(document.getElementById('canvas-setup'), url, { width: 160 });
+            if(document.getElementById('admin-modal').style.display === 'flex') renderAdminList();
         });
 
+        // ADMIN LOGIC
+        function toggleAdmin() {
+            const m = document.getElementById('admin-modal');
+            m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
+            if(m.style.display === 'flex') renderAdminList();
+        }
+
+        function renderAdminList() {
+            const list = document.getElementById('admin-song-list');
+            list.innerHTML = "";
+            const sorted = [...masterSongs].filter(s => s.active !== false).sort((a,b) => a.title.localeCompare(b.title));
+            sorted.forEach(s => {
+                const row = document.createElement('div');
+                row.className = 'song-admin-row';
+                row.innerHTML = `<div>${s.title} ${s.isDuet ? '<span class="badge badge-duet">DUET</span>' : ''} ${s.unskippable ? '<span class="badge badge-unskip">UNSKIP</span>' : ''}</div>
+                                 <div class="del-btn" onclick="confirmDelete('${s.title.replace(/'/g, "\\'")}')">X</div>`;
+                list.appendChild(row);
+            });
+        }
+
+        function confirmDelete(title) { if(confirm(`Delete ${title}?`)) socket.emit('delete-song', title); }
+
+        function showAddDialog() {
+            const title = prompt("Title - Artist:");
+            const url = prompt("YouTube URL:");
+            if(!title || !url) return;
+            socket.emit('add-song', { title, url, isDuet: confirm("Duet?"), unskippable: confirm("Unskippable?") });
+        }
+
+        // GAME LOGIC
         function startGame() {
-            const names = document.getElementById('player-names').value;
-            if(!names) return;
-            players = names.split(',').map(n => ({ name: n.trim(), score: 0 }));
-            activeDeck = [...masterSongs].sort(() => Math.random() - 0.5);
+            const n = document.getElementById('player-names').value;
+            if(!n) return;
+            players = n.split(',').map(name => ({ name: name.trim(), score: 0 }));
+            activeDeck = [...masterSongs].filter(s => s.active !== false).sort(() => Math.random() - 0.5);
             document.getElementById('setup-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
             document.getElementById('scoreboard').classList.remove('hidden');
-            updatePlayerTurnUI();
             updateUI();
         }
 
         function animateSelection() {
             document.getElementById('spin-group').classList.add('hidden');
-            document.getElementById('action-btns').classList.add('hidden');
-            let spins = 0;
-            const interval = setInterval(() => {
-                const temp = masterSongs[Math.floor(Math.random() * masterSongs.length)];
-                document.getElementById('song-display-text').innerText = temp.title;
-                if (++spins >= 20) { clearInterval(interval); finalizeSelection(); }
+            let count = 0;
+            const int = setInterval(() => {
+                const r = masterSongs[Math.floor(Math.random()*masterSongs.length)];
+                document.getElementById('song-display-text').innerText = r.title;
+                if(++count > 15) { clearInterval(int); finalizeSelection(); }
             }, 100);
         }
 
         function finalizeSelection() {
-            if (activeDeck.length === 0) activeDeck = [...masterSongs].sort(() => Math.random() - 0.5);
+            const available = activeDeck.filter(s => s.active !== false);
+            if(available.length === 0) activeDeck = [...masterSongs].filter(s => s.active !== false).sort(() => Math.random() - 0.5);
             targetSong = activeDeck.pop();
-            const parts = targetSong.title.split(' - ');
-            document.getElementById('song-display-text').innerHTML = `${parts[0]}<span class="artist-style">${parts[1] || ''}</span>`;
+            const p = targetSong.title.split(' - ');
+            document.getElementById('song-display-text').innerHTML = `${p[0]}<span class="artist-style">${p[1] || ''}</span>`;
             document.getElementById('action-btns').classList.remove('hidden');
         }
 
         function playSong() { window.open(targetSong.url, '_blank'); document.getElementById('action-btns').classList.add('hidden'); document.getElementById('result-btns').classList.remove('hidden'); }
         function skipSong() { players[currentPlayerIndex].score -= 1; updateUI(); animateSelection(); }
-
-        function startVoting(basePts) { 
-            players[currentPlayerIndex].score += basePts; 
-            document.getElementById('result-btns').classList.add('hidden'); 
-            document.getElementById('voting-overlay').classList.remove('hidden'); 
-            socket.emit('start-voting'); 
-        }
+        function startVoting(pts) { players[currentPlayerIndex].score += pts; socket.emit('start-voting'); document.getElementById('voting-overlay').classList.remove('hidden'); }
 
         socket.on('timer-update', (t) => {
             document.getElementById('v-timer').innerText = t;
-            const offset = 283 - (t / 25) * 283;
-            document.getElementById('timer-bar').style.strokeDashoffset = offset;
+            document.getElementById('timer-bar').style.strokeDashoffset = 283 - (t/25)*283;
         });
-
         socket.on('count-update', (c) => document.getElementById('v-count').innerText = `VOTES: ${c}`);
         socket.on('voting-end', (bonus) => {
             players[currentPlayerIndex].score += bonus;
             document.getElementById('voting-overlay').classList.add('hidden');
-            nextTurn();
-        });
-
-        function nextTurn() {
             currentPlayerIndex++;
-            if (currentPlayerIndex >= players.length) { currentPlayerIndex = 0; currentRound++; }
+            if(currentPlayerIndex >= players.length) { currentPlayerIndex = 0; currentRound++; }
+            document.getElementById('result-btns').classList.add('hidden');
             document.getElementById('spin-group').classList.remove('hidden');
             document.getElementById('song-display-text').innerText = "PUSH SELECT";
-            updatePlayerTurnUI();
             updateUI();
-        }
-
-        function updatePlayerTurnUI() {
-            const p = players[currentPlayerIndex];
-            const nextP = players[(currentPlayerIndex + 1) % players.length];
-            document.getElementById('current-player-display').innerText = `UP NEXT: ${p.name}`;
-            document.getElementById('next-player-name').innerText = nextP.name;
-        }
+        });
 
         function updateUI() {
             document.getElementById('round-indicator').innerText = `ROUND ${currentRound}`;
-            document.getElementById('score-list').innerHTML = players.map(p => `
-                <div style="display:flex; justify-content:space-between; padding:8px 0; border-bottom:1px solid #333; font-family:'Syncopate'; font-size:0.8rem;">
-                    <span>${p.name}</span><span>${p.score} PTS</span>
-                </div>`).join('');
+            document.getElementById('current-player-display').innerText = `UP NEXT: ${players[currentPlayerIndex].name}`;
+            document.getElementById('next-player-name').innerText = players[(currentPlayerIndex+1)%players.length].name;
+            document.getElementById('score-list').innerHTML = players.map(p => `<div style="display:flex; justify-content:space-between; margin:5px 0;"><span>${p.name}</span><span>${p.score}</span></div>`).join('');
         }
     </script>
 </body>

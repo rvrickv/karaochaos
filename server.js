@@ -14,14 +14,19 @@ let globalVoteCount = 0;
 let isVotingActive = false;
 let currentTimer = 0;
 let masterSongs = [];
-let voters = new Set(); // Stores unique fingerprints per round
+let voters = new Set();
 
-try {
-    masterSongs = JSON.parse(fs.readFileSync('./songs.json', 'utf8'));
-    console.log(`✅ Loaded ${masterSongs.length} songs.`);
-} catch (err) {
-    console.error("❌ Error loading songs.json:", err);
+function loadSongs() {
+    try {
+        const data = fs.readFileSync('./songs.json', 'utf8');
+        masterSongs = JSON.parse(data);
+        console.log(`✅ Loaded ${masterSongs.length} songs.`);
+    } catch (err) {
+        console.error("❌ Error loading songs.json:", err);
+        masterSongs = [];
+    }
 }
+loadSongs();
 
 app.use(express.static(path.join(__dirname, 'public')));
 app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
@@ -32,13 +37,28 @@ io.on('connection', (socket) => {
         socket.emit('init-data', { songs: masterSongs });
     });
 
+    socket.on('add-song', (newSong) => {
+        newSong.active = true; // Ensure it's active
+        masterSongs.push(newSong);
+        fs.writeFileSync('./songs.json', JSON.stringify(masterSongs, null, 4));
+        io.emit('init-data', { songs: masterSongs }); // Broadcast update
+    });
+
+    socket.on('delete-song', (songTitle) => {
+        const song = masterSongs.find(s => s.title === songTitle);
+        if (song) {
+            song.active = false; // "Comment out" logic
+            fs.writeFileSync('./songs.json', JSON.stringify(masterSongs, null, 4));
+            io.emit('init-data', { songs: masterSongs });
+        }
+    });
+
     socket.on('start-voting', () => {
         if (isVotingActive) return;
         isVotingActive = true;
         globalVoteCount = 0; 
         currentTimer = 25;
-        voters.clear(); // Reset the bouncer list
-        
+        voters.clear();
         io.emit('count-update', 0);
         io.emit('start-voting');
         
@@ -53,20 +73,15 @@ io.on('connection', (socket) => {
         }, 1000);
     });
 
-    // The logic that stops the cheating
     socket.on('cast-vote', (fingerprint) => {
-        // Check if voting is active AND a fingerprint was actually sent
         if (isVotingActive && fingerprint && !voters.has(fingerprint)) {
             voters.add(fingerprint); 
             globalVoteCount++;
             io.emit('count-update', globalVoteCount);
-            console.log(`✅ Valid vote: ${fingerprint}`);
-        } else {
-            console.log(`❌ Vote rejected. Active: ${isVotingActive}, New: ${!voters.has(fingerprint)}`);
         }
     });
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 Server running on port ${PORT}`);
+    console.log(`🚀 KARAOCHAOS Admin Server running on port ${PORT}`);
 });
