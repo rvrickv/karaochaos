@@ -46,7 +46,11 @@
         .btn-green { background: var(--neon-green); color: black; box-shadow: 0 0 20px var(--neon-green); }
         .btn-pink { background: var(--neon-pink); color: white; }
         .btn-red { background: var(--neon-red); color: white; }
+        
+        /* Voting Overlay & QR */
         #voting-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .voting-qr-container { position: fixed; bottom: 30px; left: 30px; background: white; padding: 12px; border-radius: 10px; }
+
         .hidden { display: none !important; }
     </style>
 </head>
@@ -100,6 +104,7 @@
     </div>
 
     <div id="voting-overlay" class="hidden">
+        <div class="voting-qr-container"><canvas id="canvas-voting"></canvas></div>
         <div style="position:relative; width:280px; height:280px; display:flex; align-items:center; justify-content:center;">
             <svg style="position:absolute; width:100%; height:100%; transform:rotate(-90deg);" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="45" fill="none" stroke="#222" stroke-width="6"></circle>
@@ -114,7 +119,7 @@
 
     <script>
         const socket = io();
-        let masterSongs = [], players = [], activeDeck = [], currentPlayerIndex = 0, currentRound = 1, maxRounds = 3, targetSong = null, skipsThisTurn = 0;
+        let masterSongs = [], players = [], activeDeck = [], currentPlayerIndex = 0, currentRound = 1, maxRounds = 2, targetSong = null, skipsThisTurn = 0;
         let isVoteActiveLocal = false; 
 
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -187,8 +192,10 @@
             const names = n.split(',').map(s => s.trim()).filter(s => s !== "");
             const shuffledNames = names.sort(() => Math.random() - 0.5);
             players = shuffledNames.map(name => ({ name, score: 0 }));
+            
             let roundsInput = parseInt(document.getElementById('round-count').value);
             maxRounds = (isNaN(roundsInput) || roundsInput < 1) ? 1 : roundsInput;
+            
             document.getElementById('setup-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
             document.getElementById('scoreboard').classList.remove('hidden');
@@ -253,6 +260,10 @@
                 setTimeout(() => { splash.style.display = 'none'; proceed(); }, 2500);
             }
         }
+
+        socket.on('voting-start', () => {
+             QRCode.toCanvas(document.getElementById('canvas-voting'), window.location.origin + '/mobile', { width: 120 });
+        });
 
         socket.on('timer-update', (t) => {
             document.getElementById('v-timer').innerText = t;
