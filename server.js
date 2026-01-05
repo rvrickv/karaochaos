@@ -1,87 +1,76 @@
 const express = require('express');
-const http = require('http');
-const { Server } = require('socket.io');
+const app = express();
+const http = require('http').Server(app);
+const io = require('socket.io')(http);
 const path = require('path');
 const fs = require('fs');
 
-const app = express();
-const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: "*" } });
+app.use(express.static('public'));
 
-const PORT = 3000;
+let songs = JSON.parse(fs.readFileSync('songs.json', 'utf8'));
+let voteCount = 0;
+let timer = 25;
+let timerInterval;
 
-let globalVoteCount = 0;
+let currentPerformance = { singer: "", song: "" };
 let isVotingActive = false;
-let currentTimer = 0;
-let masterSongs = [];
-let voters = new Set();
 
-function loadSongs() {
-    try {
-        const data = fs.readFileSync('./songs.json', 'utf8');
-        masterSongs = JSON.parse(data);
-        console.log(`✅ Loaded ${masterSongs.length} songs.`);
-    } catch (err) {
-        console.error("❌ Error loading songs.json:", err);
-        masterSongs = [];
-    }
-}
-loadSongs();
-
-app.use(express.static(path.join(__dirname, 'public')));
-app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
-app.get('/mobile', (req, res) => res.sendFile(path.join(__dirname, 'public', 'mobile.html')));
+app.get('/mobile', (req, res) => {
+    res.sendFile(path.join(__dirname, 'public/mobile.html'));
+});
 
 io.on('connection', (socket) => {
+    socket.emit('performance-update', currentPerformance);
+    if (isVotingActive) socket.emit('voting-start');
+
     socket.on('request-init', () => {
-        socket.emit('init-data', { songs: masterSongs });
+        socket.emit('init-data', { songs });
     });
 
-    socket.on('add-song', (newSong) => {
-        newSong.active = true; // Ensure it's active
-        masterSongs.push(newSong);
-        fs.writeFileSync('./songs.json', JSON.stringify(masterSongs, null, 4));
-        io.emit('init-data', { songs: masterSongs }); // Broadcast update
-    });
-
-    socket.on('delete-song', (songTitle) => {
-        const song = masterSongs.find(s => s.title === songTitle);
-        if (song) {
-            song.active = false; // "Comment out" logic
-            fs.writeFileSync('./songs.json', JSON.stringify(masterSongs, null, 4));
-            io.emit('init-data', { songs: masterSongs });
-        }
+    socket.on('update-performance', (data) => {
+        currentPerformance = data;
+        io.emit('performance-update', data);
     });
 
     socket.on('start-voting', () => {
-        if (isVotingActive) return;
+        voteCount = 0;
+        timer = 25;
         isVotingActive = true;
-        globalVoteCount = 0; 
-        currentTimer = 25;
-        voters.clear();
-        io.emit('count-update', 0);
-        io.emit('start-voting');
+        io.emit('voting-start');
+        io.emit('count-update', 0); // Reset count on screens
         
-        let interval = setInterval(() => {
-            currentTimer--;
-            io.emit('timer-update', currentTimer);
-            if (currentTimer <= 0) {
-                clearInterval(interval);
-                isVotingActive = false;
-                io.emit('voting-end', globalVoteCount); 
+        clearInterval(timerInterval);
+        timerInterval = setInterval(() => {
+            timer--;
+            io.emit('timer-update', timer);
+            if (timer <= 0) {
+                endVoting();
             }
         }, 1000);
     });
 
-    socket.on('cast-vote', (fingerprint) => {
-        if (isVotingActive && fingerprint && !voters.has(fingerprint)) {
-            voters.add(fingerprint); 
-            globalVoteCount++;
-            io.emit('count-update', globalVoteCount);
+    socket.on('cast-vote', () => {
+        if (!isVotingActive) return;
+        voteCount++;
+        io.emit('count-update', voteCount);
+
+        // Auto-end if everyone voted (excluding the main TV/admin socket)
+        const connectedDevices = io.engine.clientsCount - 1; 
+        if (voteCount >= connectedDevices && connectedDevices > 0) {
+            endVoting();
         }
     });
+
+    function endVoting() {
+        if (!isVotingActive) return;
+        clearInterval(timerInterval);
+        isVotingActive = false;
+        // Award 1 point per vote cast
+        const bonus = voteCount; 
+        io.emit('voting-end', bonus);
+    }
 });
 
-server.listen(PORT, '0.0.0.0', () => {
-    console.log(`🚀 KARAOCHAOS Admin Server running on port ${PORT}`);
+http.listen(3000, () => {
+    console.log('Server running on port 3000');
 });

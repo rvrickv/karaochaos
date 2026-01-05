@@ -1,62 +1,168 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>KARAOCHAOS AUDIENCE</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>KARAOCHAOS REMOTE</title>
     <script src="/socket.io/socket.io.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Syncopate:wght@700&family=Space+Grotesk:wght@300;700&display=swap" rel="stylesheet">
     <style>
-        body { background: #050505; color: white; font-family: sans-serif; text-align: center; text-transform: uppercase; margin: 0; padding: 20px; }
-        .timer-container { position: relative; width: 220px; height: 220px; margin: 30px auto; display: flex; align-items: center; justify-content: center; }
-        .timer-svg { position: absolute; top: 0; left: 0; width: 100%; height: 100%; transform: rotate(-90deg); }
-        #mobile-timer-bar { fill: none; stroke: #ff00ff; stroke-width: 8; stroke-linecap: round; stroke-dasharray: 283; stroke-dashoffset: 0; transition: stroke-dashoffset 1s linear; }
-        #mobile-timer { font-size: 5rem; font-weight: bold; color: #ff00ff; position: relative; z-index: 10; }
-        .btn-vote { background: #39ff14; color: black; border: none; padding: 30px; font-size: 1.8rem; border-radius: 20px; font-weight: bold; width: 100%; box-shadow: 0 0 20px #39ff14; }
+        :root { --neon-pink: #ff00ff; --neon-green: #39ff14; --neon-blue: #00f2ff; --dark-bg: #0a0a0a; }
+        body { 
+            font-family: 'Space Grotesk', sans-serif; 
+            background-color: var(--dark-bg); 
+            color: white; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            justify-content: center; 
+            height: 100vh; 
+            overflow: hidden; 
+            text-transform: uppercase; 
+            user-select: none;
+            -webkit-user-select: none;
+        }
+        
+        #status-bar { position: fixed; top: 40px; text-align: center; width: 90%; z-index: 5; }
+        #perf-label { color: rgba(255,255,255,0.5); font-size: 0.8rem; letter-spacing: 2px; margin-bottom: 5px; }
+        #singer-name { color: var(--neon-pink); font-family: 'Syncopate'; font-size: 1.8rem; margin-bottom: 12px; text-shadow: 0 0 10px var(--neon-pink); }
+        #song-name { color: var(--neon-blue); font-size: 1.3rem; opacity: 1; line-height: 1.4; font-weight: 700; }
+
+        #interaction-zone { display: flex; align-items: center; justify-content: center; width: 100%; height: 350px; }
+        
+        #vote-container { 
+            position: relative; 
+            width: 280px; 
+            height: 280px; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            cursor: pointer; 
+            -webkit-tap-highlight-color: transparent; 
+        }
+
+        svg { position: absolute; width: 100%; height: 100%; transform: rotate(-90deg); }
+        
+        #inner-fill {
+            fill: rgba(255, 255, 255, 0.03);
+            transition: fill 0.1s ease-out;
+        }
+
+        circle.ring { fill: none; stroke-width: 14; stroke-linecap: round; }
+        .track { stroke: #1a1a1a; }
+        .progress { 
+            stroke: var(--neon-green); 
+            stroke-dasharray: 628; 
+            stroke-dashoffset: 0; 
+            transition: stroke-dashoffset 1s linear; 
+        }
+
+        .button-label { 
+            font-family: 'Syncopate'; 
+            font-size: 1.8rem; 
+            color: var(--neon-green); 
+            text-shadow: 0 0 15px var(--neon-green); 
+            pointer-events: none; 
+            text-align: center; 
+            z-index: 10; 
+            line-height: 1.2;
+        }
+
+        #waiting-msg { 
+            font-family: 'Syncopate'; 
+            font-size: 1.4rem; 
+            color: #555; 
+            letter-spacing: 2px; 
+            text-align: center; 
+            line-height: 1.6;
+        }
+        .sub-wait { font-size: 0.8rem; color: #333; display: block; margin-top: 10px; }
+
+        .voted-locked { pointer-events: none !important; }
+        .voted-locked .button-label { color: #222; text-shadow: none; opacity: 0.6; }
+        
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
-    <div id="waiting-screen"><h2>KARAOCHAOS</h2><p style="color:#666; margin-top:50px;">Waiting for performer...</p></div>
-    <div id="voting-screen" class="hidden">
-        <h2>VOTE NOW!</h2>
-        <div class="timer-container">
-            <svg class="timer-svg" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="#222" stroke-width="8"></circle><circle id="mobile-timer-bar" cx="50" cy="50" r="45"></circle></svg>
-            <div id="mobile-timer">25</div>
-        </div>
-        <button id="vote-btn" class="btn-vote" onclick="sendVote()">THEY ARE KILLING IT!</button>
-        <p id="confirm" class="hidden" style="color:#39ff14; margin-top:20px; font-weight:bold;">VOTE CAST!</p>
+
+    <div id="status-bar">
+        <div id="perf-label">NOW PERFORMING:</div>
+        <div id="singer-name">READY</div>
+        <div id="song-name">WAITING FOR SELECTION</div>
     </div>
+
+    <div id="interaction-zone">
+        <div id="waiting-msg">VOTING CLOSED<br><span class="sub-wait">AWAITING NEXT ROUND</span></div>
+        
+        <div id="vote-container" class="hidden" onclick="submitVote()">
+            <svg viewBox="0 0 220 220">
+                <circle id="inner-fill" cx="110" cy="110" r="100"></circle>
+                <circle class="ring track" cx="110" cy="110" r="100"></circle>
+                <circle id="timer-ring" class="ring progress" cx="110" cy="110" r="100"></circle>
+            </svg>
+            <div id="label-text" class="button-label">NAILED<br>IT!</div>
+        </div>
+    </div>
+
     <script>
-        const socket = io(); 
-        let myID = localStorage.getItem('voterFingerprint') || 'voter-' + Math.random().toString(36).substr(2, 9);
-        localStorage.setItem('voterFingerprint', myID);
+        const socket = io();
+        const ring = document.getElementById('timer-ring');
+        const container = document.getElementById('vote-container');
+        const waiting = document.getElementById('waiting-msg');
+        const label = document.getElementById('label-text');
+        const innerFill = document.getElementById('inner-fill');
+        const circumference = 628;
+        
+        let hasVoted = false;
 
-        function sendVote() { 
-            if (localStorage.getItem('hasVoted') === 'true') return;
-            socket.emit('cast-vote', myID); 
-            localStorage.setItem('hasVoted', 'true');
-            document.getElementById('vote-btn').classList.add('hidden'); 
-            document.getElementById('confirm').classList.remove('hidden'); 
-        }
-
-        function enterVotingMode() { 
-            document.getElementById('waiting-screen').classList.add('hidden'); 
-            document.getElementById('voting-screen').classList.remove('hidden'); 
-            const voted = localStorage.getItem('hasVoted') === 'true';
-            document.getElementById('vote-btn').classList.toggle('hidden', voted);
-            document.getElementById('confirm').classList.toggle('hidden', !voted);
-        }
-
-        socket.on('start-voting', () => { localStorage.removeItem('hasVoted'); enterVotingMode(); });
-        socket.on('timer-update', (t) => { 
-            if(document.getElementById('voting-screen').classList.contains('hidden')) enterVotingMode();
-            document.getElementById('mobile-timer').innerText = t; 
-            document.getElementById('mobile-timer-bar').style.strokeDashoffset = 283 - (t/25)*283;
+        socket.on('performance-update', (data) => {
+            if(data && data.singer) {
+                document.getElementById('singer-name').innerText = data.singer;
+                document.getElementById('song-name').innerText = data.song;
+            } else {
+                document.getElementById('singer-name').innerText = "READY";
+                document.getElementById('song-name').innerText = "WAITING...";
+            }
         });
-        socket.on('voting-end', () => { 
-            localStorage.removeItem('hasVoted');
-            document.getElementById('waiting-screen').classList.remove('hidden'); 
-            document.getElementById('voting-screen').classList.add('hidden'); 
+
+        socket.on('voting-start', () => {
+            hasVoted = false;
+            // Complete reset of the UI for the new round
+            container.classList.remove('hidden', 'voted-locked');
+            waiting.classList.add('hidden');
+            label.innerHTML = "NAILED<br>IT!";
+            label.style.opacity = "1";
+            innerFill.style.fill = "rgba(255, 255, 255, 0.03)";
+            ring.style.strokeDashoffset = 0;
         });
+
+        socket.on('timer-update', (t) => {
+            const offset = circumference - (t / 25) * circumference;
+            ring.style.strokeDashoffset = offset;
+        });
+
+        socket.on('voting-end', () => {
+            container.classList.add('hidden');
+            waiting.classList.remove('hidden');
+        });
+
+        function submitVote() {
+            if (hasVoted) return;
+            hasVoted = true;
+            container.classList.add('voted-locked');
+            socket.emit('cast-vote');
+            
+            if (window.navigator.vibrate) window.navigator.vibrate(40);
+            
+            innerFill.style.fill = "rgba(57, 255, 20, 0.6)"; 
+            label.innerText = "VOTED!";
+            
+            setTimeout(() => {
+                innerFill.style.fill = "rgba(57, 255, 20, 0.15)";
+            }, 150);
+        }
     </script>
 </body>
 </html>
