@@ -28,6 +28,9 @@
         .add-song-form input[type="text"] { background: #111; border: 1px solid var(--neon-blue); color: white; padding: 10px; border-radius: 5px; flex: 1; min-width: 200px; }
         .add-song-form label { font-size: 0.8rem; font-family: 'Syncopate'; color: var(--neon-pink); display: flex; align-items: center; gap: 5px; cursor: pointer; }
 
+        /* Search Bar Styling */
+        #song-search { width: 100%; padding: 15px; background: #000; border: 2px solid var(--neon-pink); color: white; border-radius: 10px; margin-bottom: 15px; font-family: 'Space Grotesk'; font-size: 1.1rem; box-sizing: border-box; }
+
         /* Game Elements */
         #current-player-display { font-family: 'Syncopate'; font-size: 2.2rem; color: var(--neon-pink); margin-bottom: 15px; text-align: center; line-height: 1.1; }
         .performer-name { display: block; font-size: 4.8rem; color: white; text-shadow: 0 0 20px var(--neon-pink); margin-top: 10px; }
@@ -62,6 +65,8 @@
             <label><input type="checkbox" id="new-song-unskippable"> UNSKIPPABLE</label>
             <button class="toggle-btn toggle-on" onclick="addSong()">ADD</button>
         </div>
+
+        <input type="text" id="song-search" placeholder="SEARCH TITLE OR ARTIST..." oninput="renderSongManager()">
 
         <div id="song-list-container"></div>
         <button class="btn btn-green" onclick="toggleManageModal(false)" style="margin-top:20px; width:100%;">SAVE & CLOSE</button>
@@ -142,14 +147,25 @@
         }
 
         function renderSongManager() {
+            const query = document.getElementById('song-search').value.toLowerCase();
             const container = document.getElementById('song-list-container');
-            container.innerHTML = masterSongs.map((song, index) => `
-                <div class="song-item">
-                    <span>${song.title}</span>
-                    <button class="toggle-btn ${song.active !== false ? 'toggle-on' : 'toggle-off'}" onclick="toggleSong(${index})">
-                        ${song.active !== false ? 'ACTIVE' : 'INACTIVE'}
-                    </button>
-                </div>`).join('');
+            
+            // Sort masterSongs alphabetically by title
+            const sortedSongs = [...masterSongs].sort((a, b) => a.title.localeCompare(b.title));
+
+            container.innerHTML = sortedSongs
+                .filter(song => song.title.toLowerCase().includes(query))
+                .map((song) => {
+                    // Find original index for toggle functionality
+                    const originalIdx = masterSongs.findIndex(ms => ms.title === song.title);
+                    return `
+                    <div class="song-item">
+                        <span>${song.title}</span>
+                        <button class="toggle-btn ${song.active !== false ? 'toggle-on' : 'toggle-off'}" onclick="toggleSong(${originalIdx})">
+                            ${song.active !== false ? 'ACTIVE' : 'INACTIVE'}
+                        </button>
+                    </div>`;
+                }).join('');
         }
 
         function toggleSong(index) {
@@ -176,7 +192,6 @@
             masterSongs.push(newSong);
             socket.emit('add-song-to-file', newSong);
 
-            // Reset fields
             document.getElementById('new-song-title').value = "";
             document.getElementById('new-song-url').value = "";
             document.getElementById('new-song-duet').checked = false;
@@ -227,7 +242,7 @@
             const splash = document.getElementById('points-splash');
             splash.style.display = 'flex';
             if (skipsThisTurn >= 3) {
-                players[currentPlayerIndex].score -= 2; // Total -3
+                players[currentPlayerIndex].score -= 2;
                 splash.innerHTML = `<div class="splash-text" style="color:var(--neon-red); text-shadow:0 0 30px var(--neon-red);">FORFEIT!<br>-3 POINTS</div>`;
                 setTimeout(() => { splash.style.display = 'none'; proceed(); }, 2000);
             } else {
