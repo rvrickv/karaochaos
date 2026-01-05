@@ -39,6 +39,7 @@
 
         .add-song-form { background: #000; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
         .add-song-form input[type="text"] { background: #111; border: 1px solid var(--neon-blue); color: white; padding: 10px; border-radius: 5px; flex: 1; min-width: 200px; }
+        .add-song-form label { font-size: 0.8rem; font-family: 'Syncopate'; color: var(--neon-pink); display: flex; align-items: center; gap: 5px; cursor: pointer; }
         #song-search { width: 100%; padding: 15px; background: #000; border: 2px solid var(--neon-pink); color: white; border-radius: 10px; margin-bottom: 15px; font-family: 'Space Grotesk'; font-size: 1.1rem; box-sizing: border-box; }
 
         /* Game Elements */
@@ -71,6 +72,8 @@
         <div class="add-song-form">
             <input type="text" id="new-song-title" placeholder="ARTIST - TITLE">
             <input type="text" id="new-song-url" placeholder="YOUTUBE URL">
+            <label><input type="checkbox" id="new-song-duet"> DUET</label>
+            <label><input type="checkbox" id="new-song-unskippable"> UNSKIPPABLE</label>
             <button class="toggle-btn toggle-on" onclick="addSong()">ADD</button>
         </div>
         <input type="text" id="song-search" placeholder="SEARCH TITLE OR ARTIST..." oninput="renderSongManager()">
@@ -128,7 +131,6 @@
         let masterSongs = [], players = [], activeDeck = [], currentPlayerIndex = 0, currentRound = 1, maxRounds = 2, targetSong = null, skipsThisTurn = 0;
         let isVoteActiveLocal = false; 
 
-        // SOUND LOGIC RESTORED
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSelectionSound() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
@@ -167,19 +169,29 @@
         function toggleSong(index) { masterSongs[index].active = (masterSongs[index].active === false); renderSongManager(); }
 
         function addSong() {
-            const title = document.getElementById('new-song-title').value, url = document.getElementById('new-song-url').value;
+            const title = document.getElementById('new-song-title').value;
+            const url = document.getElementById('new-song-url').value;
+            // Restored Logic for Duet/Unskippable
+            const duet = document.getElementById('new-song-duet').checked;
+            const unskp = document.getElementById('new-song-unskippable').checked;
+            
             if(!title || !url) return;
-            const newSong = { title, url, active: true };
+            const newSong = { title, url, duet, unskippable: unskp, active: true };
             masterSongs.push(newSong); socket.emit('add-song-to-file', newSong);
-            document.getElementById('new-song-title').value = ""; document.getElementById('new-song-url').value = "";
+            
+            document.getElementById('new-song-title').value = ""; 
+            document.getElementById('new-song-url').value = "";
+            document.getElementById('new-song-duet').checked = false;
+            document.getElementById('new-song-unskippable').checked = false;
             renderSongManager();
         }
 
         function startGame() {
-            if (audioCtx.state === 'suspended') audioCtx.resume(); // Wake audio on start click
+            if (audioCtx.state === 'suspended') audioCtx.resume();
             const n = document.getElementById('player-names').value;
             if(!n) return;
             const names = n.split(',').map(s => s.trim()).filter(s => s !== "");
+            // Restored Randomization for Performers
             players = names.sort(() => Math.random() - 0.5).map(name => ({ name, score: 0 }));
             let roundsInput = parseInt(document.getElementById('round-count').value);
             maxRounds = (isNaN(roundsInput) || roundsInput < 1) ? 1 : roundsInput;
@@ -197,7 +209,7 @@
             const int = setInterval(() => {
                 const r = list[Math.floor(Math.random() * list.length)];
                 document.getElementById('song-display-text').innerText = r.title;
-                playSelectionSound(); // Playing sound
+                playSelectionSound();
                 if(++count > 15) { clearInterval(int); finalizeSelection(list); }
             }, 100);
         }
