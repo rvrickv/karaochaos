@@ -11,45 +11,72 @@
     <style>
         :root { --neon-pink: #ff00ff; --neon-green: #39ff14; --neon-blue: #00f2ff; --neon-red: #ff3131; --dark-bg: #050505; }
         body { font-family: 'Space Grotesk', sans-serif; background-color: var(--dark-bg); color: white; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; text-transform: uppercase; }
-        #admin-gear { position: fixed; top: 30px; right: 30px; width: 50px; height: 50px; cursor: pointer; z-index: 1000; color: var(--neon-blue); opacity: 0.6; }
+        
+        /* Setup Screen */
         #setup-screen h1 { font-family: 'Syncopate'; font-size: 7rem; color: var(--neon-pink); margin-bottom: 30px; text-shadow: 0 0 30px var(--neon-pink); }
         #player-names { padding: 25px; width: 700px; font-size: 2rem; border-radius: 20px; border: 4px solid var(--neon-blue); background: #000; color: #fff; text-align: center; margin-bottom: 20px; }
         .setup-qr-container { position: fixed; bottom: 30px; left: 30px; background: white; padding: 12px; border-radius: 10px; }
+
+        /* Song Management Modal */
+        #manage-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: #080808; border: 4px solid var(--neon-blue); padding: 30px; width: 85%; height: 85%; overflow: hidden; z-index: 10000; border-radius: 20px; display: flex; flex-direction: column; }
+        .add-song-row { display: flex; gap: 10px; padding: 15px; background: #111; border-radius: 10px; margin-bottom: 20px; }
+        .add-song-row input { background: #000; border: 1px solid #444; color: white; padding: 10px; border-radius: 5px; flex: 1; font-family: 'Space Grotesk'; }
+        #song-search { width: 100%; padding: 15px; font-size: 1.2rem; border-radius: 10px; border: 2px solid var(--neon-pink); background: #000; color: white; margin-bottom: 20px; box-sizing: border-box; }
+        #song-list-container { flex-grow: 1; overflow-y: auto; margin-bottom: 20px; border: 1px solid #222; padding: 10px; }
+        .song-item { display: flex; justify-content: space-between; padding: 12px; border-bottom: 1px solid #222; font-family: 'Space Grotesk'; align-items: center; }
+        .toggle-btn { padding: 8px 20px; cursor: pointer; border-radius: 5px; border: none; font-family: 'Syncopate'; font-size: 0.8rem; }
+        .toggle-on { background: var(--neon-green); color: black; }
+        .toggle-off { background: #444; color: white; }
+
+        /* Game Elements */
         #current-player-display { font-family: 'Syncopate'; font-size: 2.2rem; color: var(--neon-pink); margin-bottom: 15px; text-align: center; line-height: 1.1; }
         .performer-name { display: block; font-size: 4.8rem; color: white; text-shadow: 0 0 20px var(--neon-pink); margin-top: 10px; }
         #display-box { font-family: 'Syncopate', sans-serif; background: #000; border: 6px solid var(--neon-green); border-radius: 60px; box-shadow: 0 0 30px var(--neon-green), inset 0 0 15px var(--neon-green); height: 300px; width: 850px; display: flex; flex-direction: column; align-items: center; justify-content: center; margin-bottom: 30px; padding: 30px; box-sizing: border-box; color: var(--neon-green); text-align: center; }
         #song-display-text { font-size: 2.2rem; }
         #scoreboard { position: fixed; top: 20px; right: 20px; background: rgba(0,0,0,0.9); border: 3px solid var(--neon-pink); padding: 20px; border-radius: 30px; width: 260px; z-index: 100; }
-        #next-player-preview { position: fixed; bottom: 40px; right: 40px; font-family: 'Syncopate'; font-size: 1.1rem; color: var(--neon-blue); text-align: right; opacity: 0.9; z-index: 3000; }
-        .next-name { color: white; font-size: 1.8rem; display: block; text-shadow: 0 0 10px var(--neon-blue); }
         #points-splash { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none; align-items: center; justify-content: center; z-index: 6000; pointer-events: none; }
-        .splash-text { font-family: 'Syncopate'; font-size: 6rem; color: var(--neon-green); text-shadow: 0 0 40px var(--neon-green); animation: splashMove 1.8s ease-out forwards; text-align: center; }
+        .splash-text { font-family: 'Syncopate'; font-size: 6rem; color: var(--neon-green); text-shadow: 0 0 40px var(--neon-green); animation: splashMove 1.8s ease-out forwards; text-align: center; line-height: 1.2; }
         @keyframes splashMove { 0% { transform: scale(0.5) translateY(50px); opacity: 0; } 20% { transform: scale(1.1) translateY(0); opacity: 1; } 100% { transform: scale(0.9) translateY(-150px); opacity: 0; } }
         .btn { padding: 20px 40px; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 60px; margin: 10px; font-weight: 700; font-family: 'Syncopate'; }
         .btn-green { background: var(--neon-green); color: black; box-shadow: 0 0 20px var(--neon-green); }
         .btn-pink { background: var(--neon-pink); color: white; }
         .btn-red { background: var(--neon-red); color: white; }
         #voting-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.98); z-index: 2000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
-        .voting-qr-small { position: fixed; bottom: 30px; left: 30px; background: white; padding: 8px; border-radius: 10px; }
         .hidden { display: none !important; }
     </style>
 </head>
 <body>
-    <div id="admin-gear" onclick="location.reload()"><svg viewBox="0 0 24 24" fill="currentColor" style="width:100%"><path d="M12,15.5c-1.93,0-3.5-1.57-3.5-3.5 s1.57-3.5,3.5-3.5s3.5,1.57,3.5,3.5S13.93,15.5,12,15.5z"/></svg></div>
     <div id="points-splash"></div>
+
+    <div id="manage-modal" class="hidden">
+        <h2 style="font-family:'Syncopate'; color:var(--neon-blue); margin-top:0;">SONG MANAGEMENT</h2>
+        <div class="add-song-row">
+            <input type="text" id="new-title" placeholder="Artist - Title">
+            <input type="text" id="new-url" placeholder="YouTube URL">
+            <button class="toggle-btn toggle-on" onclick="addNewSong()">ADD SONG</button>
+        </div>
+        <input type="text" id="song-search" placeholder="SEARCH SONGS OR ARTISTS..." oninput="renderSongManager()">
+        <div id="song-list-container"></div>
+        <button class="btn btn-green" onclick="toggleManageModal(false)" style="width:100%; margin:0;">SAVE & CLOSE</button>
+    </div>
+
     <div id="setup-screen" style="text-align: center;">
         <h1>KARAOCHAOS</h1>
         <div class="setup-qr-container"><canvas id="canvas-setup"></canvas></div>
         <div style="display:flex; flex-direction:column; align-items:center; gap:15px;">
             <input type="text" id="player-names" placeholder="NAMES (ALICE, BOB...)">
             <div style="color:var(--neon-pink); font-family:'Syncopate';">ROUNDS: <input type="number" id="round-count" value="3" style="width:80px; padding:10px; background:#000; border:2px solid var(--neon-pink); color:#fff; text-align:center;"></div>
-            <button class="btn btn-green" onclick="startGame()">START GAME</button>
+            <div style="display:flex;">
+                <button class="btn btn-pink" onclick="toggleManageModal(true)">MANAGE SONGS</button>
+                <button class="btn btn-green" onclick="startGame()">START GAME</button>
+            </div>
         </div>
     </div>
+
     <div id="game-screen" class="hidden">
         <div id="current-player-display">NOW PERFORMING:<br><span class="performer-name">---</span></div>
         <div id="display-box"><div id="song-display-text">PUSH SELECT</div></div>
-        <div id="next-player-preview" class="hidden">UP NEXT: <span class="next-name">---</span></div>
+        <div id="next-player-preview" class="hidden" style="position:fixed; bottom:40px; right:40px; font-family:'Syncopate'; text-align:right;">UP NEXT: <span id="next-name-val" style="color:var(--neon-blue); display:block; font-size:1.8rem;">---</span></div>
         <div style="text-align: center;">
             <div id="spin-group"><button class="btn btn-green" onclick="animateSelection()">SELECT SONG</button></div>
             <div id="action-btns" class="hidden">
@@ -63,8 +90,8 @@
             <div id="game-over-btns" class="hidden"><button class="btn btn-green" onclick="location.reload()">START OVER</button></div>
         </div>
     </div>
+
     <div id="voting-overlay" class="hidden">
-        <div class="voting-qr-small"><canvas id="canvas-voting-qr"></canvas></div>
         <div style="position:relative; width:280px; height:280px; display:flex; align-items:center; justify-content:center;">
             <svg style="position:absolute; width:100%; height:100%; transform:rotate(-90deg);" viewBox="0 0 100 100">
                 <circle cx="50" cy="50" r="45" fill="none" stroke="#222" stroke-width="6"></circle>
@@ -74,46 +101,70 @@
         </div>
         <div id="v-count" style="font-size:2rem; color:var(--neon-blue); margin-top:20px;">VOTES: 0</div>
     </div>
+
     <div id="scoreboard" class="hidden"><div id="round-indicator" style="text-align: center; border-bottom: 1px solid var(--neon-blue); margin-bottom:10px;">ROUND 1</div><div id="score-list"></div></div>
 
     <script>
         const socket = io();
         let masterSongs = [], players = [], activeDeck = [], currentPlayerIndex = 0, currentRound = 1, maxRounds = 3, targetSong = null, skipsThisTurn = 0;
-        let isVoteActiveLocal = false; // Prevents Quitter from showing +0 bonus
+        let isVoteActiveLocal = false; 
 
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        function playSelectionSound() {
-            if (audioCtx.state === 'suspended') audioCtx.resume();
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.type = 'square';
-            osc.frequency.setValueAtTime(400 + Math.random() * 800, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0, audioCtx.currentTime + 0.05);
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.05);
-        }
-
-        function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
-
-        socket.emit('request-init');
         socket.on('init-data', (data) => {
             masterSongs = data.songs;
             QRCode.toCanvas(document.getElementById('canvas-setup'), window.location.origin + '/mobile', { width: 120 });
-            QRCode.toCanvas(document.getElementById('canvas-voting-qr'), window.location.origin + '/mobile', { width: 100 });
         });
+        socket.emit('request-init');
+
+        function toggleManageModal(show) {
+            const modal = document.getElementById('manage-modal');
+            if (show) { modal.classList.remove('hidden'); renderSongManager(); }
+            else { modal.classList.add('hidden'); }
+        }
+
+        function renderSongManager() {
+            const query = document.getElementById('song-search').value.toLowerCase();
+            const container = document.getElementById('song-list-container');
+            
+            // Sort master list alphabetically by title for the manager
+            const sorted = [...masterSongs].sort((a,b) => a.title.localeCompare(b.title));
+
+            container.innerHTML = sorted
+                .filter(s => s.title.toLowerCase().includes(query))
+                .map((song) => {
+                    // Match back to original index for toggling
+                    const originalIdx = masterSongs.findIndex(ms => ms.title === song.title);
+                    return `
+                    <div class="song-item">
+                        <span style="color:${song.active !== false ? 'white' : '#555'}">${song.title}</span>
+                        <button class="toggle-btn ${song.active !== false ? 'toggle-on' : 'toggle-off'}" onclick="toggleSong(${originalIdx})">
+                            ${song.active !== false ? 'ACTIVE' : 'INACTIVE'}
+                        </button>
+                    </div>`;
+                }).join('');
+        }
+
+        function toggleSong(idx) {
+            masterSongs[idx].active = (masterSongs[idx].active === false);
+            renderSongManager();
+        }
+
+        function addNewSong() {
+            const title = document.getElementById('new-title').value;
+            const url = document.getElementById('new-url').value;
+            if(!title || !url) return;
+            const newSong = { title, url, active: true };
+            masterSongs.push(newSong);
+            socket.emit('save-new-song', newSong);
+            document.getElementById('new-title').value = '';
+            document.getElementById('new-url').value = '';
+            renderSongManager();
+        }
 
         function startGame() {
             const n = document.getElementById('player-names').value;
             if(!n) return;
-            const names = shuffle(n.split(',').map(s => s.trim()).filter(s => s !== ""));
-            players = names.map(name => ({ name: name, score: 0 }));
+            players = n.split(',').map(s => ({ name: s.trim(), score: 0 })).filter(p => p.name !== "");
             maxRounds = parseInt(document.getElementById('round-count').value) || 3;
-            initGame();
-        }
-
-        function initGame() {
-            activeDeck = shuffle([...masterSongs]);
             document.getElementById('setup-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
             document.getElementById('scoreboard').classList.remove('hidden');
@@ -121,52 +172,32 @@
         }
 
         function animateSelection() {
+            const pool = masterSongs.filter(s => s.active !== false);
+            if (pool.length === 0) return alert("NO ACTIVE SONGS!");
             document.getElementById('spin-group').classList.add('hidden');
             let count = 0;
             const int = setInterval(() => {
-                const r = masterSongs[Math.floor(Math.random()*masterSongs.length)];
-                document.getElementById('song-display-text').innerText = r.title;
-                playSelectionSound();
-                if(++count > 15) { clearInterval(int); finalizeSelection(); }
+                document.getElementById('song-display-text').innerText = pool[Math.floor(Math.random() * pool.length)].title;
+                if(++count > 15) { clearInterval(int); finalizeSelection(pool); }
             }, 100);
         }
 
-        function finalizeSelection() {
-            if(activeDeck.length === 0) activeDeck = shuffle([...masterSongs]);
+        function finalizeSelection(pool) {
+            if(activeDeck.length === 0) activeDeck = [...pool].sort(() => Math.random() - 0.5);
             targetSong = activeDeck.pop();
-            const parts = targetSong.title.split(' - ');
-            document.getElementById('song-display-text').innerHTML = parts.length > 1 ? `${parts[0]}<br><span style="font-size:1.4rem; color:var(--neon-blue); font-family:'Space Grotesk';">${parts[1]}</span>` : targetSong.title;
+            document.getElementById('song-display-text').innerText = targetSong.title;
             document.getElementById('action-btns').classList.remove('hidden');
             socket.emit('update-performance', { singer: players[currentPlayerIndex].name, song: targetSong.title });
         }
 
         function playSong() { window.open(targetSong.url, '_blank'); document.getElementById('action-btns').classList.add('hidden'); document.getElementById('result-btns').classList.remove('hidden'); }
         
-        function skipSong() {
-            skipsThisTurn++;
-            if (skipsThisTurn >= 3) {
-                players[currentPlayerIndex].score -= 3;
-                skipsThisTurn = 0;
-                document.getElementById('action-btns').classList.add('hidden');
-                const splash = document.getElementById('points-splash');
-                splash.style.display = 'flex'; splash.innerHTML = `<div class="splash-text" style="color:var(--neon-red); text-shadow: 0 0 30px var(--neon-red);">FORFEIT!<br>-3 POINTS</div>`;
-                setTimeout(() => { splash.style.display = 'none'; proceed(); }, 2000);
-            } else {
-                players[currentPlayerIndex].score -= 1;
-                const splash = document.getElementById('points-splash');
-                splash.style.display = 'flex'; splash.innerHTML = `<div class="splash-text" style="color:var(--neon-red); text-shadow: 0 0 30px var(--neon-red);">-1 POINT</div>`;
-                setTimeout(() => { splash.style.display = 'none'; }, 1000);
-                updateUI(); animateSelection();
-            }
-        }
-
         function handleResult(pts, triggerVote) {
             players[currentPlayerIndex].score += pts;
             const splash = document.getElementById('points-splash');
-            
+            splash.style.display = 'flex';
             if (triggerVote) {
                 isVoteActiveLocal = true;
-                splash.style.display = 'flex';
                 splash.innerHTML = `<div class="splash-text">NICELY DONE!<br>+10 POINTS</div>`;
                 socket.emit('start-voting');
                 document.getElementById('next-player-preview').classList.remove('hidden');
@@ -175,21 +206,13 @@
             } else {
                 isVoteActiveLocal = false;
                 socket.emit('cancel-voting'); 
-                splash.style.display = 'flex';
                 splash.innerHTML = `<div class="splash-text">+5 POINTS FOR TRYING!</div>`;
                 setTimeout(() => { splash.style.display = 'none'; proceed(); }, 2500);
             }
         }
 
-        socket.on('timer-update', (t) => {
-            document.getElementById('v-timer').innerText = t;
-            document.getElementById('timer-bar').style.strokeDashoffset = 283 - (t/25)*283;
-        });
-        socket.on('count-update', (c) => document.getElementById('v-count').innerText = `VOTES: ${c}`);
-        
         socket.on('voting-end', (bonus) => {
             document.getElementById('voting-overlay').classList.add('hidden');
-            // ONLY show bonus splash if a vote actually happened
             if (isVoteActiveLocal) {
                 players[currentPlayerIndex].score += bonus;
                 const splash = document.getElementById('points-splash');
@@ -201,17 +224,27 @@
             }
         });
 
+        function skipSong() {
+            skipsThisTurn++; players[currentPlayerIndex].score -= 1;
+            const splash = document.getElementById('points-splash'); splash.style.display = 'flex';
+            if (skipsThisTurn >= 3) {
+                players[currentPlayerIndex].score -= 2;
+                splash.innerHTML = `<div class="splash-text" style="color:var(--neon-red);">-3 POINTS</div>`;
+                setTimeout(() => { splash.style.display = 'none'; proceed(); }, 2000);
+            } else {
+                splash.innerHTML = `<div class="splash-text" style="color:var(--neon-red);">-1 POINT</div>`;
+                setTimeout(() => { splash.style.display = 'none'; updateUI(); animateSelection(); }, 1000);
+            }
+        }
+
         function proceed() {
-            skipsThisTurn = 0;
-            currentPlayerIndex++;
+            skipsThisTurn = 0; currentPlayerIndex++;
             if(currentPlayerIndex >= players.length) { currentPlayerIndex = 0; currentRound++; }
-            document.getElementById('action-btns').classList.add('hidden');
             document.getElementById('result-btns').classList.add('hidden');
             document.getElementById('next-player-preview').classList.add('hidden');
             if(currentRound > maxRounds) {
-                document.getElementById('song-display-text').innerText = "FINALE";
-                document.getElementById('game-over-btns').classList.remove('hidden');
                 document.getElementById('current-player-display').innerHTML = `WINNER:<br><span class="performer-name">${[...players].sort((a,b)=>b.score-a.score)[0].name}</span>`;
+                document.getElementById('game-over-btns').classList.remove('hidden');
             } else {
                 document.getElementById('spin-group').classList.remove('hidden');
                 document.getElementById('song-display-text').innerText = "PUSH SELECT";
@@ -225,9 +258,8 @@
             document.getElementById('score-list').innerHTML = players.map(p => `<div style="display:flex; justify-content:space-between; margin:5px 0;"><span>${p.name}</span><span>${p.score}</span></div>`).join('');
             if(currentRound <= maxRounds) {
                 document.getElementById('current-player-display').innerHTML = `NOW PERFORMING:<br><span class="performer-name">${players[currentPlayerIndex].name}</span>`;
-                let nIdx = currentPlayerIndex + 1; let nRnd = currentRound;
-                if(nIdx >= players.length) { nIdx = 0; nRnd++; }
-                document.getElementById('next-player-preview').innerHTML = nRnd > maxRounds ? "FINAL SING" : `UP NEXT: <span class="next-name">${players[nIdx].name}</span>`;
+                let nIdx = (currentPlayerIndex + 1) % players.length;
+                document.getElementById('next-name-val').innerText = players[nIdx].name;
             }
         }
     </script>
