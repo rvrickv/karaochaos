@@ -242,7 +242,9 @@
             const splash = document.getElementById('points-splash');
             splash.style.display = 'flex';
             if (skipsThisTurn >= 3) {
-                players[currentPlayerIndex].score -= 2;
+                players[currentPlayerIndex].score -= 2; // Total -3
+                // BUG FIX: Hide action buttons immediately on forfeit
+                document.getElementById('action-btns').classList.add('hidden');
                 splash.innerHTML = `<div class="splash-text" style="color:var(--neon-red); text-shadow:0 0 30px var(--neon-red);">FORFEIT!<br>-3 POINTS</div>`;
                 setTimeout(() => { splash.style.display = 'none'; proceed(); }, 2000);
             } else {
