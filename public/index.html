@@ -12,8 +12,6 @@
         :root { --neon-pink: #ff00ff; --neon-green: #39ff14; --neon-blue: #00f2ff; --neon-red: #ff3131; --dark-bg: #050505; }
         body { font-family: 'Space Grotesk', sans-serif; background-color: var(--dark-bg); color: white; margin: 0; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; text-transform: uppercase; }
         
-        #admin-gear { position: fixed; top: 30px; right: 30px; width: 50px; height: 50px; cursor: pointer; z-index: 1000; color: var(--neon-blue); opacity: 0.6; }
-        
         /* Setup & Management */
         #setup-screen h1 { font-family: 'Syncopate'; font-size: 7rem; color: var(--neon-pink); margin-bottom: 30px; text-shadow: 0 0 30px var(--neon-pink); }
         #player-names { padding: 25px; width: 700px; font-size: 2rem; border-radius: 20px; border: 4px solid var(--neon-blue); background: #000; color: #fff; text-align: center; margin-bottom: 20px; }
@@ -24,6 +22,11 @@
         .toggle-btn { padding: 8px 20px; cursor: pointer; border-radius: 5px; border: none; font-family: 'Syncopate'; font-size: 0.8rem; font-weight: bold; }
         .toggle-on { background: var(--neon-green); color: black; }
         .toggle-off { background: #444; color: white; }
+
+        /* Add Song Form Styling */
+        .add-song-form { background: #000; padding: 20px; border-radius: 15px; border: 1px solid #333; margin-bottom: 20px; display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+        .add-song-form input[type="text"] { background: #111; border: 1px solid var(--neon-blue); color: white; padding: 10px; border-radius: 5px; flex: 1; min-width: 200px; }
+        .add-song-form label { font-size: 0.8rem; font-family: 'Syncopate'; color: var(--neon-pink); display: flex; align-items: center; gap: 5px; cursor: pointer; }
 
         /* Game Elements */
         #current-player-display { font-family: 'Syncopate'; font-size: 2.2rem; color: var(--neon-pink); margin-bottom: 15px; text-align: center; line-height: 1.1; }
@@ -47,12 +50,19 @@
     </style>
 </head>
 <body>
-    <div id="admin-gear" onclick="location.reload()"><svg viewBox="0 0 24 24" fill="currentColor" style="width:100%"><path d="M12,15.5c-1.93,0-3.5-1.57-3.5-3.5 s1.57-3.5,3.5-3.5s3.5,1.57,3.5,3.5S13.93,15.5,12,15.5z"/></svg></div>
-    
     <div id="points-splash"></div>
 
     <div id="manage-modal" class="hidden">
         <h2 style="font-family:'Syncopate'; color:var(--neon-blue);">SONG MANAGEMENT</h2>
+        
+        <div class="add-song-form">
+            <input type="text" id="new-song-title" placeholder="ARTIST - TITLE">
+            <input type="text" id="new-song-url" placeholder="YOUTUBE URL">
+            <label><input type="checkbox" id="new-song-duet"> DUET</label>
+            <label><input type="checkbox" id="new-song-unskippable"> UNSKIPPABLE</label>
+            <button class="toggle-btn toggle-on" onclick="addSong()">ADD</button>
+        </div>
+
         <div id="song-list-container"></div>
         <button class="btn btn-green" onclick="toggleManageModal(false)" style="margin-top:20px; width:100%;">SAVE & CLOSE</button>
     </div>
@@ -144,6 +154,34 @@
 
         function toggleSong(index) {
             masterSongs[index].active = (masterSongs[index].active === false) ? true : false;
+            renderSongManager();
+        }
+
+        function addSong() {
+            const title = document.getElementById('new-song-title').value;
+            const url = document.getElementById('new-song-url').value;
+            const isDuet = document.getElementById('new-song-duet').checked;
+            const isUnskippable = document.getElementById('new-song-unskippable').checked;
+
+            if(!title || !url) return;
+
+            const newSong = {
+                title: title,
+                url: url,
+                duet: isDuet,
+                unskippable: isUnskippable,
+                active: true
+            };
+
+            masterSongs.push(newSong);
+            socket.emit('add-song-to-file', newSong);
+
+            // Reset fields
+            document.getElementById('new-song-title').value = "";
+            document.getElementById('new-song-url').value = "";
+            document.getElementById('new-song-duet').checked = false;
+            document.getElementById('new-song-unskippable').checked = false;
+            
             renderSongManager();
         }
 
