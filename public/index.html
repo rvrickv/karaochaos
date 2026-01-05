@@ -22,10 +22,9 @@
         #scoreboard { position: fixed; top: 20px; right: 20px; background: rgba(0,0,0,0.9); border: 3px solid var(--neon-pink); padding: 20px; border-radius: 30px; width: 260px; z-index: 100; }
         #next-player-preview { position: fixed; bottom: 40px; right: 40px; font-family: 'Syncopate'; font-size: 1.1rem; color: var(--neon-blue); text-align: right; opacity: 0.9; z-index: 3000; }
         .next-name { color: white; font-size: 1.8rem; display: block; text-shadow: 0 0 10px var(--neon-blue); }
-        #points-splash { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none; align-items: center; justify-content: center; z-index: 3000; pointer-events: none; }
-        .splash-text { font-family: 'Syncopate'; font-size: 7rem; color: var(--neon-green); text-shadow: 0 0 40px var(--neon-green); animation: splashMove 1.5s ease-out forwards; text-align: center; }
-        .red-splash { color: var(--neon-red) !important; text-shadow: 0 0 40px var(--neon-red) !important; }
-        @keyframes splashMove { 0% { transform: scale(0.5) translateY(50px); opacity: 0; } 20% { transform: scale(1.1) translateY(0); opacity: 1; } 100% { transform: scale(0.8) translateY(-200px); opacity: 0; } }
+        #points-splash { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none; align-items: center; justify-content: center; z-index: 6000; pointer-events: none; }
+        .splash-text { font-family: 'Syncopate'; font-size: 6rem; color: var(--neon-green); text-shadow: 0 0 40px var(--neon-green); animation: splashMove 1.8s ease-out forwards; text-align: center; }
+        @keyframes splashMove { 0% { transform: scale(0.5) translateY(50px); opacity: 0; } 20% { transform: scale(1.1) translateY(0); opacity: 1; } 100% { transform: scale(0.9) translateY(-150px); opacity: 0; } }
         .btn { padding: 20px 40px; font-size: 1.2rem; cursor: pointer; border: none; border-radius: 60px; margin: 10px; font-weight: 700; font-family: 'Syncopate'; }
         .btn-green { background: var(--neon-green); color: black; box-shadow: 0 0 20px var(--neon-green); }
         .btn-pink { background: var(--neon-pink); color: white; }
@@ -36,9 +35,7 @@
     </style>
 </head>
 <body>
-    <div id="admin-gear" onclick="toggleAdmin()">
-        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M19.14,12.94c0.04-0.3,0.06-0.61,0.06-0.94c0-0.32-0.02-0.64-0.07-0.94l2.03-1.58c0.18-0.14,0.23-0.41,0.12-0.61 l-1.92-3.32c-0.12-0.22-0.37-0.29-0.59-0.22l-2.39,0.96c-0.5-0.38-1.03-0.7-1.62-0.94L14.4,2.81c-0.04-0.24-0.24-0.41-0.48-0.41 h-3.84c-0.24,0-0.43,0.17-0.47,0.41L9.25,5.35C8.66,5.59,8.12,5.92,7.63,6.29L5.24,5.33c-0.22-0.08-0.47,0-0.59,0.22L2.74,8.87 C2.62,9.08,2.66,9.34,2.84,9.48l2.03,1.58C4.82,11.36,4.8,11.68,4.8,12c0,0.32,0.02,0.64,0.07,0.94l-2.03,1.58 c-0.18,0.14-0.23,0.41-0.12,0.61l1.92,3.32c0.12,0.22,0.37,0.29,0.59,0.22l2.39-0.96c0.5,0.38,1.03,0.7,1.62,0.94l0.36,2.54 c0.05,0.24,0.24,0.41,0.48,0.41h3.84c0.24,0,0.44-0.17,0.47-0.41l0.36-2.54c0.59-0.24,1.13-0.56,1.62-0.94l2.39,0.96 c0.22,0.08,0.47,0,0.59-0.22l1.92-3.32c0.12-0.22,0.07-0.47-0.12-0.61L19.14,12.94z M12,15.5c-1.93,0-3.5-1.57-3.5-3.5 s1.57-3.5,3.5-3.5s3.5,1.57,3.5,3.5S13.93,15.5,12,15.5z"/></svg>
-    </div>
+    <div id="admin-gear" onclick="location.reload()"><svg viewBox="0 0 24 24" fill="currentColor" style="width:100%"><path d="M12,15.5c-1.93,0-3.5-1.57-3.5-3.5 s1.57-3.5,3.5-3.5s3.5,1.57,3.5,3.5S13.93,15.5,12,15.5z"/></svg></div>
     <div id="points-splash"></div>
     <div id="setup-screen" style="text-align: center;">
         <h1>KARAOCHAOS</h1>
@@ -60,19 +57,19 @@
                 <button class="btn btn-pink" onclick="skipSong()">SKIP (-1)</button>
             </div>
             <div id="result-btns" class="hidden">
-                <button class="btn btn-red" onclick="startVoting(5)">QUITTER</button>
-                <button class="btn btn-green" onclick="startVoting(10)">NAILED IT!</button>
+                <button class="btn btn-red" onclick="handleResult(5, false)">QUITTER</button>
+                <button class="btn btn-green" onclick="handleResult(10, true)">NAILED IT!</button>
             </div>
-            <div id="game-over-btns" class="hidden">
-                <button class="btn btn-green" onclick="location.reload()">START OVER</button>
-                <button class="btn btn-pink" onclick="playAgainSameSingers()">PLAY AGAIN</button>
-            </div>
+            <div id="game-over-btns" class="hidden"><button class="btn btn-green" onclick="location.reload()">START OVER</button></div>
         </div>
     </div>
     <div id="voting-overlay" class="hidden">
         <div class="voting-qr-small"><canvas id="canvas-voting-qr"></canvas></div>
         <div style="position:relative; width:280px; height:280px; display:flex; align-items:center; justify-content:center;">
-            <svg style="position:absolute; width:100%; height:100%; transform:rotate(-90deg);" viewBox="0 0 100 100"><circle cx="50" cy="50" r="45" fill="none" stroke="#222" stroke-width="6"></circle><circle id="timer-bar" cx="50" cy="50" r="45" fill="none" stroke="var(--neon-green)" stroke-width="6" stroke-dasharray="283" stroke-dashoffset="0" style="transition:1s linear;"></circle></svg>
+            <svg style="position:absolute; width:100%; height:100%; transform:rotate(-90deg);" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="45" fill="none" stroke="#222" stroke-width="6"></circle>
+                <circle id="timer-bar" cx="50" cy="50" r="45" fill="none" stroke="var(--neon-green)" stroke-width="6" stroke-dasharray="283" stroke-dashoffset="0" style="transition:1s linear;"></circle>
+            </svg>
             <div id="v-timer" style="font-size:7rem; color:var(--neon-green); font-family:'Syncopate';">25</div>
         </div>
         <div id="v-count" style="font-size:2rem; color:var(--neon-blue); margin-top:20px;">VOTES: 0</div>
@@ -81,44 +78,29 @@
 
     <script>
         const socket = io();
-        let masterSongs = [], players = [], activeDeck = [], currentPlayerIndex = 0, currentRound = 1, maxRounds = 3, targetSong = null;
-        let skipsThisTurn = 0;
-        
-        // NEW RANDOMIZED SNAPPY AUDIO
+        let masterSongs = [], players = [], activeDeck = [], currentPlayerIndex = 0, currentRound = 1, maxRounds = 3, targetSong = null, skipsThisTurn = 0;
+        let isVoteActiveLocal = false; // Prevents Quitter from showing +0 bonus
+
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         function playSelectionSound() {
             if (audioCtx.state === 'suspended') audioCtx.resume();
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
             osc.type = 'square';
-            
-            // Random high frequency for a "glitchy" mechanical feel
-            const freq = 400 + Math.random() * 1000;
-            osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
-            
-            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-            gain.gain.setValueAtTime(0, audioCtx.currentTime + 0.04); // Cut off very fast
-
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.04);
+            osc.frequency.setValueAtTime(400 + Math.random() * 800, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+            gain.gain.setValueAtTime(0, audioCtx.currentTime + 0.05);
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.05);
         }
 
-        function shuffle(arr) {
-            for (let i = arr.length - 1; i > 0; i--) {
-                const j = Math.floor(Math.random() * (i + 1));
-                [arr[i], arr[j]] = [arr[j], arr[i]];
-            }
-            return arr;
-        }
+        function shuffle(arr) { for (let i = arr.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [arr[i], arr[j]] = [arr[j], arr[i]]; } return arr; }
 
         socket.emit('request-init');
         socket.on('init-data', (data) => {
             masterSongs = data.songs;
-            const url = window.location.origin + '/mobile';
-            QRCode.toCanvas(document.getElementById('canvas-setup'), url, { width: 120 });
-            QRCode.toCanvas(document.getElementById('canvas-voting-qr'), url, { width: 100 });
+            QRCode.toCanvas(document.getElementById('canvas-setup'), window.location.origin + '/mobile', { width: 120 });
+            QRCode.toCanvas(document.getElementById('canvas-voting-qr'), window.location.origin + '/mobile', { width: 100 });
         });
 
         function startGame() {
@@ -127,25 +109,15 @@
             const names = shuffle(n.split(',').map(s => s.trim()).filter(s => s !== ""));
             players = names.map(name => ({ name: name, score: 0 }));
             maxRounds = parseInt(document.getElementById('round-count').value) || 3;
-            document.getElementById('admin-gear').classList.add('hidden');
             initGame();
         }
 
         function initGame() {
-            activeDeck = shuffle([...masterSongs].filter(s => s.active !== false));
+            activeDeck = shuffle([...masterSongs]);
             document.getElementById('setup-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
             document.getElementById('scoreboard').classList.remove('hidden');
             updateUI();
-        }
-
-        function playAgainSameSingers() {
-            players.forEach(p => p.score = 0);
-            shuffle(players);
-            currentPlayerIndex = 0; currentRound = 1;
-            document.getElementById('game-over-btns').classList.add('hidden');
-            document.getElementById('spin-group').classList.remove('hidden');
-            initGame();
         }
 
         function animateSelection() {
@@ -160,12 +132,11 @@
         }
 
         function finalizeSelection() {
-            if(activeDeck.length === 0) activeDeck = shuffle([...masterSongs].filter(s => s.active !== false));
+            if(activeDeck.length === 0) activeDeck = shuffle([...masterSongs]);
             targetSong = activeDeck.pop();
             const parts = targetSong.title.split(' - ');
             document.getElementById('song-display-text').innerHTML = parts.length > 1 ? `${parts[0]}<br><span style="font-size:1.4rem; color:var(--neon-blue); font-family:'Space Grotesk';">${parts[1]}</span>` : targetSong.title;
             document.getElementById('action-btns').classList.remove('hidden');
-            document.getElementById('next-player-preview').classList.add('hidden'); 
             socket.emit('update-performance', { singer: players[currentPlayerIndex].name, song: targetSong.title });
         }
 
@@ -173,39 +144,41 @@
         
         function skipSong() {
             skipsThisTurn++;
-            
             if (skipsThisTurn >= 3) {
-                // Final Deduction: -3 (total -5)
                 players[currentPlayerIndex].score -= 3;
                 skipsThisTurn = 0;
                 document.getElementById('action-btns').classList.add('hidden');
-                
                 const splash = document.getElementById('points-splash');
-                splash.style.display = 'flex';
-                splash.innerHTML = `<div class="splash-text red-splash">TURN FORFEITED!<br>-3 POINTS</div>`;
-                setTimeout(() => { 
-                    splash.style.display = 'none'; 
-                    proceed(); 
-                }, 2000);
+                splash.style.display = 'flex'; splash.innerHTML = `<div class="splash-text" style="color:var(--neon-red); text-shadow: 0 0 30px var(--neon-red);">FORFEIT!<br>-3 POINTS</div>`;
+                setTimeout(() => { splash.style.display = 'none'; proceed(); }, 2000);
             } else {
-                // Normal Skip Deduction: -1
                 players[currentPlayerIndex].score -= 1;
                 const splash = document.getElementById('points-splash');
-                splash.style.display = 'flex';
-                splash.innerHTML = `<div class="splash-text red-splash">-1 POINT</div>`;
+                splash.style.display = 'flex'; splash.innerHTML = `<div class="splash-text" style="color:var(--neon-red); text-shadow: 0 0 30px var(--neon-red);">-1 POINT</div>`;
                 setTimeout(() => { splash.style.display = 'none'; }, 1000);
-
-                updateUI();
-                animateSelection();
+                updateUI(); animateSelection();
             }
         }
 
-        function startVoting(pts) {
-            skipsThisTurn = 0;
+        function handleResult(pts, triggerVote) {
             players[currentPlayerIndex].score += pts;
-            socket.emit('start-voting');
-            document.getElementById('next-player-preview').classList.remove('hidden');
-            document.getElementById('voting-overlay').classList.remove('hidden');
+            const splash = document.getElementById('points-splash');
+            
+            if (triggerVote) {
+                isVoteActiveLocal = true;
+                splash.style.display = 'flex';
+                splash.innerHTML = `<div class="splash-text">NICELY DONE!<br>+10 POINTS</div>`;
+                socket.emit('start-voting');
+                document.getElementById('next-player-preview').classList.remove('hidden');
+                document.getElementById('voting-overlay').classList.remove('hidden');
+                setTimeout(() => { splash.style.display = 'none'; }, 2000);
+            } else {
+                isVoteActiveLocal = false;
+                socket.emit('cancel-voting'); 
+                splash.style.display = 'flex';
+                splash.innerHTML = `<div class="splash-text">+5 POINTS FOR TRYING!</div>`;
+                setTimeout(() => { splash.style.display = 'none'; proceed(); }, 2500);
+            }
         }
 
         socket.on('timer-update', (t) => {
@@ -213,31 +186,32 @@
             document.getElementById('timer-bar').style.strokeDashoffset = 283 - (t/25)*283;
         });
         socket.on('count-update', (c) => document.getElementById('v-count').innerText = `VOTES: ${c}`);
-
+        
         socket.on('voting-end', (bonus) => {
             document.getElementById('voting-overlay').classList.add('hidden');
-            document.getElementById('next-player-preview').classList.add('hidden');
-            players[currentPlayerIndex].score += bonus;
-            if(bonus > 0) {
+            // ONLY show bonus splash if a vote actually happened
+            if (isVoteActiveLocal) {
+                players[currentPlayerIndex].score += bonus;
                 const splash = document.getElementById('points-splash');
                 splash.style.display = 'flex';
-                splash.innerHTML = `<div class="splash-text">+${bonus} POINTS!!!</div>`;
-                if(bonus > 3) confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
-                setTimeout(() => { splash.style.display = 'none'; proceed(); }, 1500);
-            } else { proceed(); }
+                splash.innerHTML = `<div class="splash-text">+${bonus} BONUS!</div>`;
+                if(bonus > 2) confetti({ particleCount: 150, spread: 70, origin: { y: 0.6 } });
+                setTimeout(() => { splash.style.display = 'none'; proceed(); }, 2000);
+                isVoteActiveLocal = false;
+            }
         });
 
         function proceed() {
+            skipsThisTurn = 0;
             currentPlayerIndex++;
             if(currentPlayerIndex >= players.length) { currentPlayerIndex = 0; currentRound++; }
             document.getElementById('action-btns').classList.add('hidden');
             document.getElementById('result-btns').classList.add('hidden');
-            
+            document.getElementById('next-player-preview').classList.add('hidden');
             if(currentRound > maxRounds) {
                 document.getElementById('song-display-text').innerText = "FINALE";
                 document.getElementById('game-over-btns').classList.remove('hidden');
                 document.getElementById('current-player-display').innerHTML = `WINNER:<br><span class="performer-name">${[...players].sort((a,b)=>b.score-a.score)[0].name}</span>`;
-                document.getElementById('next-player-preview').classList.add('hidden');
             } else {
                 document.getElementById('spin-group').classList.remove('hidden');
                 document.getElementById('song-display-text').innerText = "PUSH SELECT";
@@ -251,12 +225,9 @@
             document.getElementById('score-list').innerHTML = players.map(p => `<div style="display:flex; justify-content:space-between; margin:5px 0;"><span>${p.name}</span><span>${p.score}</span></div>`).join('');
             if(currentRound <= maxRounds) {
                 document.getElementById('current-player-display').innerHTML = `NOW PERFORMING:<br><span class="performer-name">${players[currentPlayerIndex].name}</span>`;
-                let nIdx = currentPlayerIndex + 1;
-                let nRnd = currentRound;
+                let nIdx = currentPlayerIndex + 1; let nRnd = currentRound;
                 if(nIdx >= players.length) { nIdx = 0; nRnd++; }
-                const nextEl = document.getElementById('next-player-preview');
-                if(nRnd > maxRounds) nextEl.innerHTML = "FINAL PERFORMANCE";
-                else nextEl.innerHTML = `UP NEXT: <span class="next-name">${players[nIdx].name}</span>`;
+                document.getElementById('next-player-preview').innerHTML = nRnd > maxRounds ? "FINAL SING" : `UP NEXT: <span class="next-name">${players[nIdx].name}</span>`;
             }
         }
     </script>
