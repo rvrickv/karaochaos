@@ -204,7 +204,11 @@
             const n = document.getElementById('player-names').value;
             if(!n) return;
             const names = n.split(',').map(s => s.trim()).filter(s => s !== "");
-            players = names.map(name => ({ name: name, score: 0 }));
+            
+            // Randomize participant order
+            const shuffledNames = names.sort(() => Math.random() - 0.5);
+            
+            players = shuffledNames.map(name => ({ name: name, score: 0 }));
             maxRounds = parseInt(document.getElementById('round-count').value) || 3;
             document.getElementById('setup-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
