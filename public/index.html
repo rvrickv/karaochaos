@@ -246,7 +246,7 @@
                 socket.emit('start-voting'); document.getElementById('voting-overlay').classList.remove('hidden');
                 setTimeout(() => { splash.style.display = 'none'; }, 2000);
             } else {
-                isVoteActiveLocal = false; splash.innerHTML = `<div class="splash-text">+5 POINTS!</div>`;
+                isVoteActiveLocal = false; splash.innerHTML = `<div class="splash-text">GOOD TRY!<br>+5 POINTS!</div>`;
                 setTimeout(() => { splash.style.display = 'none'; proceed(); }, 2500);
             }
         }
