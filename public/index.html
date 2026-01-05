@@ -73,7 +73,7 @@
         <div class="setup-qr-container"><canvas id="canvas-setup"></canvas></div>
         <div style="display:flex; flex-direction:column; align-items:center; gap:15px;">
             <input type="text" id="player-names" placeholder="NAMES (ALICE, BOB...)">
-            <div style="color:var(--neon-pink); font-family:'Syncopate';">ROUNDS: <input type="number" id="round-count" value="3" style="width:80px; padding:10px; background:#000; border:2px solid var(--neon-pink); color:#fff; text-align:center;"></div>
+            <div style="color:var(--neon-pink); font-family:'Syncopate';">ROUNDS: <input type="number" id="round-count" value="2" min="1" style="width:80px; padding:10px; background:#000; border:2px solid var(--neon-pink); color:#fff; text-align:center;"></div>
             <div style="display:flex;">
                 <button class="btn btn-pink" onclick="toggleManageModal(true)">MANAGE SONGS</button>
                 <button class="btn btn-green" onclick="startGame()">START GAME</button>
@@ -187,7 +187,8 @@
             const names = n.split(',').map(s => s.trim()).filter(s => s !== "");
             const shuffledNames = names.sort(() => Math.random() - 0.5);
             players = shuffledNames.map(name => ({ name, score: 0 }));
-            maxRounds = parseInt(document.getElementById('round-count').value) || 3;
+            let roundsInput = parseInt(document.getElementById('round-count').value);
+            maxRounds = (isNaN(roundsInput) || roundsInput < 1) ? 1 : roundsInput;
             document.getElementById('setup-screen').classList.add('hidden');
             document.getElementById('game-screen').classList.remove('hidden');
             document.getElementById('scoreboard').classList.remove('hidden');
